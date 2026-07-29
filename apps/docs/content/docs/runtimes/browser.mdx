@@ -1,6 +1,44 @@
 ---
 title: Browser
-description: requestAnimationFrame clock.
+description: requestAnimationFrame clock using performance.now.
 ---
 
-Stub. Full browser runtime docs land in Step 3.
+`createBrowserClock()` targets display-driven environments (browsers, Electron renderer, etc.) where `requestAnimationFrame` exists.
+
+## Export
+
+```ts
+function createBrowserClock(): Clock
+```
+
+From `@watchstop/core`.
+
+## Behavior
+
+| Method | Implementation |
+| --- | --- |
+| `now()` | `performance.now()` |
+| `schedule(cb)` | `requestAnimationFrame(() => cb())` — return the numeric/frame handle |
+| `cancel(handle)` | `cancelAnimationFrame(handle)` (idempotent wrapper) |
+
+## Requirements
+
+- Assumes a DOM-like global with `requestAnimationFrame`, `cancelAnimationFrame`, and `performance.now`.
+- Do **not** import `node:` modules.
+- `schedule` must not call `cb` synchronously.
+
+## Usage
+
+```ts
+import { Stopwatch, createBrowserClock } from '@watchstop/core'
+
+const sw = new Stopwatch(createBrowserClock())
+sw.start()
+```
+
+Prefer `new Stopwatch()` / `detectClock()` when you want automatic selection. Use `createBrowserClock()` when you explicitly need rAF even if other clocks are available.
+
+## Notes
+
+- Tick rate follows the display refresh (typically ~60 Hz). That is intentional for UI stopwatches.
+- In background tabs, browsers may throttle rAF; elapsed from `get()` stays correct because it uses `performance.now()`, not frame count.

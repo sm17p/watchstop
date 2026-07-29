@@ -1,6 +1,82 @@
 ---
 title: Testing
-description: Mock clock for deterministic tests.
+description: Mock clock with controllable advance for deterministic tests.
 ---
 
-Stub. Full testing docs land in Step 3.
+`createMockClock()` lets tests drive time without real timers or animation frames.
+
+## Export
+
+```ts
+interface MockClock extends Clock {
+  advance(ms: number): void
+}
+
+function createMockClock(): MockClock
+```
+
+From `@watchstop/core`.
+
+## Behavior
+
+### `now()`
+
+Returns an internal monotonic counter starting at `0` (or any fixed origin — document as starting at `0`).
+
+### `schedule(callback)`
+
+- Stores `callback` in a queue keyed by an opaque handle.
+- Does **not** run `callback` until `advance` reaches/passes the scheduled time, **or** you may model schedules as “run on next `advance` that moves time by any positive amount” if using a simple queue.
+
+**Normative simple model (recommended):**
+
+- Each `schedule` enqueues `{ handle, callback }` with `due = now() + 0` meaning “run on next flush”, **or** `due = now()` and `advance(ms)` increases `now` then runs all due callbacks with `due <= now`.
+- Recommended: treat each `schedule` as due immediately at the **current** `now` but deferred until the next `advance` call that flushes the queue (even `advance(0)` may flush — prefer requiring `advance(ms)` with `ms >= 0` and flush callbacks due at `<= now` after bumping time).
+
+**Concrete recommended algorithm:**
+
+1. Keep `currentTime` (start `0`) and a list of `{ handle, callback, dueTime }`.
+2. `schedule(cb)` assigns `dueTime = currentTime` (or `currentTime + frameDelay` with `frameDelay = 0` or `16`). Use **`dueTime = currentTime`** and only flush on `advance`, so `schedule` itself never runs `cb` sync.
+3. `advance(ms)`: require `ms >= 0`; set `currentTime += ms`; then run all callbacks with `dueTime <= currentTime` in insertion order; remove them; callbacks may call `schedule` again during flush — those new items get `dueTime = currentTime` and wait until a **subsequent** `advance` (do not re-enter infinitely in the same flush).
+
+### `cancel(handle)`
+
+Removes the pending entry if present; idempotent.
+
+### `advance(ms: number): void`
+
+- Advances mock time by `ms` milliseconds (`ms` must be finite and `>= 0`; invalid input may throw or no-op — prefer throw `RangeError` on negative/`NaN`).
+- Flushes due scheduled callbacks as above.
+
+## Usage with Stopwatch
+
+```ts
+import { Stopwatch, createMockClock } from '@watchstop/core'
+import { expect, test } from 'vitest'
+
+test('accumulates elapsed', () => {
+  const clock = createMockClock()
+  const sw = new Stopwatch(clock)
+
+  sw.start()
+  clock.advance(100)
+  expect(sw.get()).toBe(100)
+
+  sw.stop()
+  clock.advance(50)
+  expect(sw.get()).toBe(100)
+
+  sw.start()
+  clock.advance(20)
+  expect(sw.get()).toBe(120)
+
+  sw.reset()
+  expect(sw.get()).toBe(0)
+
+  sw.destroy()
+})
+```
+
+## Why mock exists
+
+Real `setTimeout` and rAF make elapsed tests flaky. Core Vitest suites **must** use `createMockClock` for deterministic start/stop/reset/subscribe/destroy coverage. Optionally add one smoke test with `createTimerClock` to ensure the timer path schedules without throwing.

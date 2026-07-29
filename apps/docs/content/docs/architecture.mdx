@@ -1,6 +1,58 @@
 ---
 title: Architecture
-description: Clock, Store, and Stopwatch layering.
+description: Clock, Store, and Stopwatch layering for Watchstop.
 ---
 
-Stub. Full architecture spec lands in Step 3.
+Watchstop separates **time** (Clock), **observation** (Store), and **elapsed measurement** (Stopwatch). Frameworks only need `get` + `subscribe`. Runtimes only need `now` + `schedule` + `cancel`. Neither concern belongs inside Stopwatch itself.
+
+## Layers
+
+```
+Clock providers          Core                      Framework adapters
+─────────────────        ────                      ──────────────────
+createBrowserClock  ─┐
+createTimerClock    ─┼─► Clock ─► Stopwatch ─► Store<number> ─► React / Svelte / …
+createMockClock     ─┘              │
+detectClock         ───────────────┘
+```
+
+| Layer | Responsibility | Package |
+| --- | --- | --- |
+| Clock | Read monotonic time; schedule/cancel ticks | `@watchstop/core` |
+| Store | Snapshot + subscription | `@watchstop/core` (interface); Stopwatch implements it |
+| Stopwatch | Accumulate elapsed ms while running | `@watchstop/core` |
+| Adapters | Bridge `Store` into framework reactivity | `@watchstop/react`, `svelte`, … |
+
+## Design rules
+
+1. **No framework imports in core.** Angular, Qwik, and Alpine must consume the same `Store` contract as React.
+2. **One timer clock for Node, Bun, and Deno.** All three expose `performance.now` and `setTimeout` / `clearTimeout`. Do not ship `@watchstop/node`, `@watchstop/bun`, or `@watchstop/deno`.
+3. **Default clock via `detectClock()`.** Prefer browser (`requestAnimationFrame`) when present; otherwise timer clock. No hard `node:` imports in the browser build.
+4. **Countdown / Ticker are out of v1.** Only `Stopwatch` ships in the first core release.
+5. **Adapters are thin.** No timing math, no clocks, no elapsed accumulation in adapters.
+
+## Data flow while running
+
+1. `start()` records `startTime = clock.now()` and schedules the next tick with `clock.schedule`.
+2. Each tick recomputes `elapsed = accumulated + (clock.now() - startTime)` and notifies subscribers.
+3. `stop()` cancels the scheduled handle, adds the current segment into `accumulated`, and clears `startTime`.
+4. `get()` returns the live elapsed value (running or stopped).
+5. `destroy()` stops scheduling, clears listeners, and makes further use a no-op or safe idle state (see [Stopwatch](/docs/core/stopwatch)).
+
+## Runtime matrix
+
+| Environment | Factory | `now` | `schedule` / `cancel` |
+| --- | --- | --- | --- |
+| Browser (display) | `createBrowserClock()` | `performance.now()` | `requestAnimationFrame` / `cancelAnimationFrame` |
+| Node / Bun / Deno | `createTimerClock({ intervalMs? })` | `performance.now()` | `setTimeout` / `clearTimeout` |
+| Tests | `createMockClock()` | controllable | controllable + `advance(ms)` |
+| Auto | `detectClock()` | browser if `requestAnimationFrame` exists, else timer | same |
+
+## Package map (v1)
+
+- **Ships first:** `@watchstop/core`
+- **Wave 1 adapters:** React, Svelte, Vue, Solid
+- **Wave 2 adapters:** Angular, Qwik, Alpine
+- **Docs-only:** Vanilla, Preact, Lit
+
+See [Agents](/docs/agents) for acceptance criteria and adopter constraints that pressure the `Store` shape.

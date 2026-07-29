@@ -1,6 +1,62 @@
 ---
 title: Store
-description: get + subscribe contract for adapters.
+description: Snapshot get and subscribe contract for framework adapters.
 ---
 
-Stub. Full Store API lands in Step 3.
+`Store<T>` is the only surface framework adapters need. It is deliberately small so React, Svelte, Vue, Solid, Angular, Qwik, and Alpine can all bind without core knowing about them.
+
+## Interface
+
+```ts
+interface Store<T> {
+  get(): T
+  subscribe(listener: (value: T) => void): () => void
+}
+```
+
+Export this type from `@watchstop/core` as `Store`.
+
+`Stopwatch` implements `Store<number>` where the value is elapsed milliseconds.
+
+## Method contracts
+
+### `get(): T`
+
+- Returns the current snapshot synchronously.
+- Must be safe to call at any time after construction (including before any subscription).
+- Must not notify listeners by itself.
+- For `Stopwatch`, while running, `get()` reflects time **as of the call** (live), not only last tick.
+
+### `subscribe(listener: (value: T) => void): () => void`
+
+- Registers `listener` to be called when the store’s value changes in a way the implementation considers observable.
+- Returns an **unsubscribe** function.
+- Unsubscribe is **idempotent** and must not throw.
+- Calling `subscribe` must **not** require the listener to be invoked synchronously on subscribe (adapters may call `get()` themselves for the initial value — e.g. React `useSyncExternalStore`).
+- After unsubscribe, `listener` must not be called again for later updates.
+- Multiple subscribers are supported; each gets the same value notifications independently.
+
+## Notification rules (Stopwatch as Store)
+
+Notify all current listeners when elapsed changes due to:
+
+- a running tick
+- `start` / `stop` / `reset` that changes the visible elapsed value
+
+Do **not** notify when:
+
+- `get()` is called
+- subscribe/unsubscribe alone (no value change)
+- `destroy()` after listeners are cleared (no further notifies)
+
+Listener errors: one listener throwing must not prevent other listeners from running. Prefer isolating per-listener `try`/`catch` inside notify.
+
+## Adopter expectations
+
+Adapters must:
+
+1. Read with `get()` for the initial / server snapshot when needed.
+2. Subscribe for updates; unsubscribe on teardown (`DestroyRef`, `onCleanup`, `onDestroy`, element `destroy`, etc.).
+3. Never call `start`/`stop`/`reset` unless the adapter’s public API intentionally exposes those methods (hooks may return the `Stopwatch` instance or wrap controls).
+
+See [Agents](/docs/agents) for framework-specific binding constraints (especially Angular, Qwik, Alpine).
