@@ -108,9 +108,9 @@ While **stopped**, visible elapsed is `accumulated`.
 While running:
 
 1. `handle = clock.schedule(() => onTick())`
-2. `onTick`: if not running or destroyed, return; else notify listeners with `get()`; then schedule again.
+2. `onTick`: if not running or destroyed, return; notify listeners with `get()`; if still running and not destroyed, schedule again. A listener may call `stop` / `reset` / `destroy` during notify — do not re-schedule in that case.
 
-Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which — it always re-schedules after each callback.
+Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which — it re-schedules after each callback only while still running and not destroyed.
 
 ## Edge cases
 
