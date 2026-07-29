@@ -42,3 +42,12 @@ run = "pnpm --filter @watchstop/docs build"
 [tasks."docs:dev"]
 description = "Start the docs dev server"
 run = "pnpm --filter @watchstop/docs dev"
+
+[tasks."docs:deploy"]
+description = "Build and deploy docs to Cloudflare Pages"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+pnpm --filter @watchstop/docs build
+pnpm --filter @watchstop/docs deploy
+"""
