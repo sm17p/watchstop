@@ -1,0 +1,19 @@
+{
+  "name": "watchstop",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.4",
+  "scripts": {
+    "docs": "mise run docs",
+    "docs:dev": "mise run docs:dev",
+    "build": "mise run build",
+    "test": "mise run test",
+    "typecheck": "mise run typecheck"
+  },
+  "devDependencies": {
+    "@typescript/native-preview": "7.0.0-dev.20260707.2",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

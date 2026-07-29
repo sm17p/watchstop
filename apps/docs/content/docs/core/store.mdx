@@ -1,0 +1,82 @@
+---
+title: Store
+description: Snapshot get and subscribe contract for framework adapters.
+---
+
+`Store<T>` is the only surface framework adapters need. It is deliberately small so React, Svelte, Vue, Solid, Angular, Qwik, and Alpine can all bind without core knowing about them.
+
+## Interface
+
+```ts
+interface Store<T> {
+  get(): T
+  subscribe(listener: (value: T) => void): () => void
+}
+```
+
+Export this type from `@watchstop/core` as `Store`.
+
+`Stopwatch` implements `Store<number>` where the value is elapsed milliseconds.
+
+## Method contracts
+
+### `get(): T`
+
+- Returns the **live** current value synchronously (for `Stopwatch`, live elapsed — see [Stopwatch](/docs/core/stopwatch)).
+- Must be safe to call at any time after construction (including before any subscription).
+- Must not notify listeners by itself.
+- Required for vanilla / Node and any adopter that polls without waiting for a tick.
+- There is no separate `peek()` API.
+
+### `subscribe(listener: (value: T) => void): () => void`
+
+- Registers `listener` to be called when the store’s value changes in a way the implementation considers observable.
+- Returns an **unsubscribe** function.
+- Unsubscribe is **idempotent** and must not throw.
+- Calling `subscribe` must **not** require the listener to be invoked synchronously on subscribe (adapters may call `get()` themselves for the initial value).
+- After unsubscribe, `listener` must not be called again for later updates.
+- Multiple subscribers are supported; each gets the same value notifications independently.
+
+## Notification rules (Stopwatch as Store)
+
+Notify all current listeners when elapsed changes due to:
+
+- a running clock tick
+- `start` / `stop` / `reset` that changes the visible elapsed value (or as those methods already specify)
+
+Do **not** notify when:
+
+- `get()` is called
+- subscribe/unsubscribe alone (no value change)
+- `destroy()` after listeners are cleared (no further notifies)
+
+Subscribers fire **only** on clock ticks and on mutating controls (`start` / `stop` / `reset` / `destroy` as specified on those methods) — not on every `get()`.
+
+Listener errors: one listener throwing must not prevent other listeners from running. Prefer isolating per-listener `try`/`catch` inside notify.
+
+## Listener reentrancy (normative)
+
+During a single notify wave:
+
+1. Snapshot the listener list (or equivalent) at wave start, or otherwise ensure **listeners added during the wave do not receive the current wave**.
+2. **Listeners removed (unsubscribed) during the wave are not called again** in that wave if they have not already been invoked.
+3. The current listener invocation always finishes.
+4. `start` / `stop` / `reset` / `destroy` invoked from a listener are allowed. They take effect per their method contracts (immediately for state; scheduling/cancel as specified). Prefer: `destroy` clears listeners so remaining listeners in the same wave that were cleared are skipped if not yet called.
+
+## React and `useSyncExternalStore` (normative)
+
+`get()` is live. React’s `useSyncExternalStore` requires `getSnapshot` to return a value that is **referentially/value-stable between store notifications**. Adapters **MUST NOT** pass live `store.get` (or `stopwatch.get`) as `getSnapshot`.
+
+The React adapter must cache the value received via `subscribe` (or a versioned snapshot updated only inside the listener) and have `getSnapshot` return that cached snapshot so it is stable between notifications. Initial / server snapshot may still come from one `get()` call when subscribing begins.
+
+See [Agents](/docs/agents) and [React](/docs/frameworks/react).
+
+## Adopter expectations
+
+Adapters must:
+
+1. Read with `get()` for the initial / server snapshot when needed (except React’s ongoing `getSnapshot`, which must use the cached subscribe snapshot above).
+2. Subscribe for updates; unsubscribe on teardown (`DestroyRef`, `onCleanup`, `onDestroy`, element `destroy`, etc.).
+3. Never call `start`/`stop`/`reset` unless the adapter’s public API intentionally exposes those methods (hooks may return the `Stopwatch` instance or wrap controls).
+
+See [Agents](/docs/agents) for framework-specific binding constraints (especially Angular, Qwik, Alpine).

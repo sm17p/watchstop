@@ -1,0 +1,65 @@
+---
+title: Timer
+description: setTimeout clock for Node, Bun, and Deno — one API.
+---
+
+`createTimerClock()` is the **single** server-side / non-rAF clock. Node, Bun, and Deno all share `performance.now` + `setTimeout` / `clearTimeout`. There is no `createNodeClock`, `createBunClock`, or `createDenoClock` in v1.
+
+## Export
+
+```ts
+type TimerClockOptions = {
+  intervalMs?: number
+}
+
+function createTimerClock(options?: TimerClockOptions): Clock
+```
+
+From `@watchstop/core`.
+
+## Options
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `intervalMs` | `16` | Delay passed to `setTimeout` for each `schedule` |
+
+`16` approximates a 60 Hz UI tick for headless use. Callers may choose `100`, `1000`, etc. for coarser updates.
+
+If `intervalMs` is provided and is not a finite number `> 0`, `createTimerClock` **throws** (`RangeError`). The default `16` is always valid.
+
+## Behavior
+
+| Method | Implementation |
+| --- | --- |
+| `now()` | `performance.now()` |
+| `schedule(cb)` | `setTimeout(() => cb(), intervalMs)` — return the timeout handle |
+| `cancel(handle)` | `clearTimeout(handle)` (idempotent wrapper) |
+
+## Runtime coverage
+
+| Runtime | Supported via this factory |
+| --- | --- |
+| Node.js | Yes |
+| Bun | Yes |
+| Deno | Yes |
+| Browser | Yes (but prefer [Browser](/docs/runtimes/browser) for UI) |
+
+## Usage
+
+```ts
+import { Stopwatch, createTimerClock } from '@watchstop/core'
+
+const sw = new Stopwatch(createTimerClock())
+const slow = new Stopwatch(createTimerClock({ intervalMs: 100 }))
+
+sw.start()
+```
+
+## Detection
+
+`detectClock()` returns `createBrowserClock()` when `typeof requestAnimationFrame === 'function'`, otherwise `createTimerClock()`. That makes `new Stopwatch()` work in Node/Bun/Deno without configuration.
+
+## Constraints
+
+- No `node:timers` / `node:perf_hooks` hard imports required if globals exist; prefer portable globals so the same ESM build runs in Bun/Deno/browser.
+- Do not schedule with `setInterval` inside the clock — Stopwatch owns the repeat loop via repeated `schedule` calls.

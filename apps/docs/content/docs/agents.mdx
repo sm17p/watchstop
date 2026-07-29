@@ -1,0 +1,160 @@
+---
+title: Agents
+description: Acceptance criteria and adopter constraints for implementers.
+---
+
+This page is the contract for coding agents implementing `@watchstop/core` and later framework adapters. Core docs are the source of truth; this page lists **must-pass** behaviors and **adopter constraints** so `Store` is not accidentally React-shaped.
+
+Also read: [Architecture](/docs/architecture), [Clock](/docs/core/clock), [Store](/docs/core/store), [Stopwatch](/docs/core/stopwatch), [Browser](/docs/runtimes/browser), [Timer](/docs/runtimes/timer), [Testing](/docs/runtimes/testing).
+
+Machine indexes: [`/llms.txt`](/llms.txt), [`/llms-full.txt`](/llms-full.txt).
+
+## Implementation order
+
+1. Scaffold `packages/core` with **tsdown** (`format: ['esm','cjs']`, `dts: true`) and Vitest.
+2. Implement clocks: `createMockClock`, `createBrowserClock`, `createTimerClock`, `detectClock`.
+3. Implement `Stopwatch`.
+4. Export public API from package entry exactly as named below. **Also** add a `packages/core` tsconfig and register it in the root `tsconfig.json` `references` array (root refs are empty today; `pnpm typecheck` / `tsgo -b` needs the project reference). Public APIs need **explicit return types** because `tsconfig.base.json` sets `isolatedDeclarations: true`.
+5. Typecheck with **TS7 (`tsgo`)**; `pnpm test` + `pnpm build` green. Dev dependency `@typescript/native-preview` is pinned in root `package.json` (not `latest`).
+6. Only then Wave 1 / Wave 2 adapters.
+
+## Exact public names
+
+```ts
+interface Clock {
+  now(): number
+  schedule(callback: () => void): unknown
+  cancel(handle: unknown): void
+}
+
+interface Store<T> {
+  get(): T
+  subscribe(listener: (value: T) => void): () => void
+}
+
+type MockClockOptions = {
+  frameDelay?: number
+}
+
+interface MockClock extends Clock {
+  advance(ms: number): void
+}
+
+type TimerClockOptions = {
+  intervalMs?: number
+}
+
+declare class Stopwatch implements Store<number> {
+  constructor(clock?: Clock)
+  start(): void
+  stop(): void
+  reset(): void
+  get(): number
+  subscribe(listener: (elapsed: number) => void): () => void
+  destroy(): void
+}
+
+declare function createBrowserClock(): Clock
+declare function createTimerClock(options?: TimerClockOptions): Clock
+declare function createMockClock(options?: MockClockOptions): MockClock
+declare function detectClock(): Clock
+```
+
+Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
+
+## Core acceptance criteria
+
+### Clocks
+
+- [ ] `createMockClock().now()` starts at `0` and increases only via `advance`.
+- [ ] `schedule` enqueues with `dueTime = now + frameDelay` (default `frameDelay: 0`) and never runs the callback synchronously.
+- [ ] `advance(ms)` throws if `ms` is not finite `>= 0`; otherwise bumps `now` and single-pass flushes due callbacks (stable by due time); nested `schedule` during flush waits for a later `advance`.
+- [ ] `cancel` is idempotent and prevents the callback.
+- [ ] `createTimerClock({ intervalMs })` uses that delay for `setTimeout`; throws if `intervalMs` is not finite `> 0`.
+- [ ] `createBrowserClock` uses rAF + `performance.now`; throws if `requestAnimationFrame` / `cancelAnimationFrame` missing (skip or mock in Node unit tests).
+- [ ] `detectClock()` returns browser clock when `requestAnimationFrame` is a function, else timer clock.
+- [ ] No `node:` imports required for the browser-safe build entry.
+
+### Stopwatch
+
+- [ ] Default construction uses `detectClock()`.
+- [ ] Initial `get()` is `0`; not running.
+- [ ] `get()` while running is **live** elapsed (as of the call), not only last tick.
+- [ ] `start` → `advance` → `get()` reflects elapsed; subscribers receive updates on ticks / mutating controls.
+- [ ] `stop` freezes elapsed; further `advance` does not change `get()`.
+- [ ] Second `start` after `stop` resumes from accumulated total.
+- [ ] Double `start` / double `stop` are no-ops.
+- [ ] `reset` sets elapsed to `0` and stops.
+- [ ] `subscribe` unsubscribe is idempotent; no calls after unsubscribe.
+- [ ] Multiple subscribers all receive updates.
+- [ ] Throwing listener does not block other listeners.
+- [ ] Notify reentrancy: newly added listeners miss the current wave; removed listeners are not called again in that wave; `start`/`stop`/`reset`/`destroy` from a listener are allowed; `destroy` clears listeners so remaining cleared listeners in the wave are skipped.
+- [ ] `destroy` stops ticks, clears listeners, freezes `get()`, ignores later `start`/`stop`/`reset`.
+- [ ] `subscribe` after `destroy` does not retain listeners.
+
+### Packaging
+
+- [ ] Package name `@watchstop/core`.
+- [ ] `"type": "module"` with `exports` for `types` / `import` / `require`.
+- [ ] Built with tsdown; declarations emitted; public exports have explicit return types (`isolatedDeclarations`).
+- [ ] Vitest covers the checklist above via `createMockClock`.
+
+## Adopter constraints (design pressure on Store)
+
+Adapters must stay thin: **only** bridge `get` / `subscribe` (plus exposing `start`/`stop`/`reset`/`destroy` if the adapter’s API includes controls). No clocks or elapsed math in adapters.
+
+### React (`@watchstop/react`) — Wave 1
+
+- Bind with `useSyncExternalStore`.
+- **MUST NOT** pass live `store.get` / `stopwatch.get` as `getSnapshot`. Cache the value from `subscribe` (or a versioned snapshot updated only in the listener); `getSnapshot` returns that cached snapshot so it is stable between notifications.
+- Do not use `useState` + manual subscribe as the primary path.
+- SSR: initial / server snapshot may use one `get()`; must be safe without `window`.
+
+### Svelte (`@watchstop/svelte`) — Wave 1
+
+- Expose a readable-store shape (`subscribe` compatible with `$store` auto-subscription).
+- May wrap `Stopwatch` or implement the readable contract by delegating to `subscribe`/`get`.
+
+### Vue (`@watchstop/vue`) — Wave 1
+
+- Composable returns a `ref` (or shallow ref) updated from `subscribe`, cleaned up with `onScopeDispose`.
+- Initial `ref` value from `get()`.
+
+### Solid (`@watchstop/solid`) — Wave 1
+
+- Create a signal from `get()`; update in `subscribe`; `onCleanup` unsubscribes.
+
+### Angular (`@watchstop/angular`) — Wave 2
+
+- Bridge `Store` → Angular **signal** and/or Observable.
+- Unsubscribe / end bridging via `DestroyRef` (or `effect` teardown) — **not** by requiring core to know Angular.
+- Core must **not** import `@angular/*`.
+- Implication for core: `subscribe` return value must be a plain unsubscribe function (already required).
+
+### Qwik (`@watchstop/qwik`) — Wave 2
+
+- Subscribe **only on the client** (e.g. `useVisibleTask$` / equivalent). No SSR subscription leaks.
+- Keep adapter thin so core stays free of framework closures and serialization concerns.
+- Implication for core: `Stopwatch` instances are client-owned; core holds no framework callbacks beyond user listeners.
+
+### Alpine (`@watchstop/alpine`) — Wave 2
+
+- Imperative `subscribe` inside `Alpine.data` / magic / plugin helper.
+- Unsubscribe on Alpine `destroy` / element removal.
+- Implication for core: destroy/unsubscribe paths must be idempotent (already required).
+
+### Docs-only (no package in v1)
+
+Vanilla, Preact, and Lit are **docs-only** — there is no `@watchstop/vanilla`, `@watchstop/preact`, or `@watchstop/lit` package.
+
+- **Vanilla:** use `Stopwatch` + DOM updates in `subscribe`.
+- **Preact:** prefer `@watchstop/react` when compat allows, or core directly.
+- **Lit:** subscribe in `connectedCallback`, unsubscribe in `disconnectedCallback`.
+
+## If Store is insufficient for Wave 2
+
+Change **core** + these docs + core tests first. Do not special-case timing or subscription semantics inside a single adapter.
+
+## Framework docs
+
+Framework pages under `/docs/frameworks/*` stay stubs until the matching package ships (Step 7), except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Agents implementing adapters should still follow the constraints above.

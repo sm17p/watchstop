@@ -1,0 +1,72 @@
+---
+title: Clock
+description: Runtime-agnostic time and scheduling interface.
+---
+
+A `Clock` supplies monotonic time and a schedule/cancel pair. Stopwatch never calls `setTimeout` or `requestAnimationFrame` directly.
+
+## Interface
+
+```ts
+interface Clock {
+  now(): number
+  schedule(callback: () => void): unknown
+  cancel(handle: unknown): void
+}
+```
+
+Export this type from `@watchstop/core` as `Clock`.
+
+## Method contracts
+
+### `now(): number`
+
+- Returns a **monotonic** timestamp in **milliseconds**.
+- Prefer `performance.now()` in all shipped clocks.
+- Values must be comparable with subtraction (`later - earlier`) to produce elapsed ms.
+- Must not jump backward under normal operation (wall-clock `Date.now()` is not acceptable for production clocks).
+
+### `schedule(callback: () => void): unknown`
+
+- Arranges for `callback` to run once in the future (next animation frame, next timer interval, or mock queue).
+- Returns an opaque `handle` that `cancel` understands.
+- Must not invoke `callback` synchronously inside `schedule`.
+- Clocks have **no** `destroy` method. Factories document missing-API failures (e.g. browser clock throws when `requestAnimationFrame` is absent). Cancel remains safe on expired or unknown handles.
+
+### `cancel(handle: unknown): void`
+
+- Cancels a pending callback from `schedule`.
+- Must be **idempotent**: canceling twice, or canceling an unknown/expired handle, must not throw.
+- After cancel, `callback` must not run (unless it already started).
+
+## Invariants
+
+1. `now()` is side-effect free regarding scheduled callbacks.
+2. Each successful `schedule` has at most one corresponding callback invocation unless re-scheduled.
+3. Stopwatch owns the loop: clocks do **not** auto-repeat. Repeating ticks are `schedule` → callback → `schedule` again inside Stopwatch.
+4. Handles are opaque to Stopwatch; never inspect handle type in Stopwatch beyond passing to `cancel`.
+
+## Factories (see Runtimes)
+
+| Export | Page |
+| --- | --- |
+| `createBrowserClock()` | [Browser](/docs/runtimes/browser) |
+| `createTimerClock(options?)` | [Timer](/docs/runtimes/timer) |
+| `createMockClock()` | [Testing](/docs/runtimes/testing) |
+| `detectClock()` | chooses browser vs timer |
+
+## Install + import
+
+```bash
+pnpm add @watchstop/core
+```
+
+```ts
+import {
+  type Clock,
+  createBrowserClock,
+  createTimerClock,
+  createMockClock,
+  detectClock,
+} from '@watchstop/core'
+```

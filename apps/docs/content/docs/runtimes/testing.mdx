@@ -1,0 +1,94 @@
+---
+title: Testing
+description: Mock clock with controllable advance for deterministic tests.
+---
+
+`createMockClock()` lets tests drive time without real timers or animation frames.
+
+## Export
+
+```ts
+type MockClockOptions = {
+  frameDelay?: number
+}
+
+interface MockClock extends Clock {
+  advance(ms: number): void
+}
+
+function createMockClock(options?: MockClockOptions): MockClock
+```
+
+From `@watchstop/core`.
+
+## Options
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `frameDelay` | `0` | Added to `now()` when computing each schedule’s due time |
+
+If `frameDelay` is provided and is not a finite number `>= 0`, **throw** (`RangeError`).
+
+## Normative algorithm
+
+Keep:
+
+- `currentTime` — starts at `0`
+- a pending list of `{ handle, callback, dueTime }`
+
+### `now()`
+
+Returns `currentTime`.
+
+### `schedule(callback)`
+
+1. Assign an opaque `handle`.
+2. Enqueue `{ handle, callback, dueTime: currentTime + frameDelay }`.
+3. Return `handle`.
+4. Must **not** run `callback` synchronously inside `schedule`.
+
+### `cancel(handle)`
+
+Remove the pending entry if present. Idempotent; must not throw.
+
+### `advance(ms: number): void`
+
+1. If `ms` is not a finite number `>= 0`, **throw** (`RangeError`).
+2. Set `currentTime += ms`.
+3. **Single-pass flush:** collect every pending entry with `dueTime <= currentTime`, stable-sorted by `dueTime` then insertion order; remove them from the pending list; invoke each `callback` in that order.
+4. Callbacks invoked during this pass may call `schedule` / `cancel`. Newly scheduled entries are **not** flushed in this `advance` — they wait for a later `advance` (including `advance(0)` when already due).
+
+Single-pass is required so Stopwatch’s tick loop (`schedule` → notify → `schedule` again) with default `frameDelay: 0` cannot spin forever inside one `advance`.
+
+## Usage with Stopwatch
+
+```ts
+import { Stopwatch, createMockClock } from '@watchstop/core'
+import { expect, test } from 'vitest'
+
+test('accumulates elapsed', () => {
+  const clock = createMockClock()
+  const sw = new Stopwatch(clock)
+
+  sw.start()
+  clock.advance(100)
+  expect(sw.get()).toBe(100)
+
+  sw.stop()
+  clock.advance(50)
+  expect(sw.get()).toBe(100)
+
+  sw.start()
+  clock.advance(20)
+  expect(sw.get()).toBe(120)
+
+  sw.reset()
+  expect(sw.get()).toBe(0)
+
+  sw.destroy()
+})
+```
+
+## Why mock exists
+
+Real `setTimeout` and rAF make elapsed tests flaky. Core Vitest suites **must** use `createMockClock` for deterministic start/stop/reset/subscribe/destroy coverage. Optionally add one smoke test with `createTimerClock` to ensure the timer path schedules without throwing.

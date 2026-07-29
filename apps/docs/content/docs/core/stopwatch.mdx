@@ -1,0 +1,151 @@
+---
+title: Stopwatch
+description: Elapsed-time Store built on an injectable Clock.
+---
+
+`Stopwatch` measures elapsed milliseconds. It implements `Store<number>` and uses an injected `Clock` for time and ticks.
+
+## Public API
+
+```ts
+class Stopwatch implements Store<number> {
+  constructor(clock?: Clock)
+  start(): void
+  stop(): void
+  reset(): void
+  get(): number
+  subscribe(listener: (elapsed: number) => void): () => void
+  destroy(): void
+}
+```
+
+Export `Stopwatch` from `@watchstop/core`.
+
+## Construction
+
+```ts
+import { Stopwatch, detectClock, createMockClock } from '@watchstop/core'
+
+const live = new Stopwatch()
+const explicit = new Stopwatch(detectClock())
+const underTest = new Stopwatch(createMockClock())
+```
+
+- `clock` is optional. When omitted, use `detectClock()`.
+- Initial elapsed is `0`.
+- Initial state is **stopped** (not running).
+
+## Internal model (normative)
+
+Implementers should keep equivalent state:
+
+| Field | Meaning |
+| --- | --- |
+| `clock` | Injected `Clock` |
+| `accumulated` | Elapsed ms from completed run segments |
+| `startTime` | `clock.now()` at last `start`, or unset when stopped |
+| `running` | Whether a segment is active |
+| `handle` | Pending `schedule` handle, or unset |
+| `listeners` | Set of subscribed callbacks |
+| `destroyed` | Whether `destroy()` has been called |
+
+While **running**, visible elapsed is:
+
+```ts
+accumulated + (clock.now() - startTime)
+```
+
+While **stopped**, visible elapsed is `accumulated`.
+
+## Methods
+
+### `start(): void`
+
+- If `destroyed`, no-op.
+- If already running, no-op (do **not** reset `startTime`).
+- Otherwise set `running = true`, `startTime = clock.now()`, schedule the tick loop, and notify if the visible value should refresh (usually still same number at t0; notifying is allowed but not required when value is unchanged).
+
+### `stop(): void`
+
+- If `destroyed` or not running, no-op.
+- Cancel pending `handle`.
+- Set `accumulated = accumulated + (clock.now() - startTime)`.
+- Clear `startTime`, set `running = false`.
+- Notify listeners with the stopped elapsed value.
+
+### `reset(): void`
+
+- If `destroyed`, no-op.
+- Cancel pending `handle` if any.
+- Set `accumulated = 0`, clear `startTime`, set `running = false`.
+- Notify listeners with `0` when the previous visible value was not already `0`.
+
+### `get(): number`
+
+- If destroyed, return the last frozen elapsed (typically `accumulated` after destroy’s stop), or `0` if never started — pick one and keep it stable: **return `accumulated` after destroy completes its internal stop**.
+- If running, return **live** `accumulated + (clock.now() - startTime)` as of the call (not only last tick). Required for vanilla / Node.
+- If stopped, return `accumulated`.
+- Units: **milliseconds** as a finite number (`>= 0` under normal clocks).
+- There is no separate `peek()` API. React adapters must not use live `get` as `useSyncExternalStore`’s `getSnapshot` — see [Store](/docs/core/store) and [React](/docs/frameworks/react).
+
+### `subscribe(listener: (elapsed: number) => void): () => void`
+
+- See [Store](/docs/core/store), including **listener reentrancy** rules.
+- Subscribers fire only on clock ticks and on mutating controls as specified (`start` / `stop` / `reset` / `destroy`).
+- If `destroyed`, `subscribe` returns a no-op unsubscribe and does not retain the listener.
+
+### `destroy(): void`
+
+- Idempotent.
+- Stop the tick loop (same as `stop()` if running).
+- Clear all listeners without requiring them to unsubscribe first.
+- Further `start` / `stop` / `reset` are no-ops.
+- Further `subscribe` does not attach.
+- `get()` remains safe and returns the frozen elapsed.
+
+## Tick loop
+
+While running:
+
+1. `handle = clock.schedule(() => onTick())`
+2. `onTick`: if not running or destroyed, return; else notify listeners with `get()`; then schedule again.
+
+Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which — it always re-schedules after each callback.
+
+## Edge cases
+
+| Case | Behavior |
+| --- | --- |
+| Double `start` | Second call no-op |
+| Double `stop` | Second call no-op |
+| `reset` while running | Cancels loop, elapsed → `0`, stopped |
+| `start` after `reset` | Fresh segment from 0 |
+| `destroy` while running | Stops and freezes elapsed; clears listeners |
+| Listener throws | Other listeners still run |
+| Listener reentrancy | Added listeners miss current wave; removed skip rest of wave; controls allowed; `destroy` clears so remaining cleared listeners are skipped |
+| `cancel` after natural fire | Idempotent; no throw |
+
+## Usage
+
+```ts
+import { Stopwatch } from '@watchstop/core'
+
+const sw = new Stopwatch()
+const unsubscribe = sw.subscribe((elapsed) => {
+  console.log(elapsed)
+})
+
+sw.start()
+sw.stop()
+console.log(sw.get())
+sw.reset()
+unsubscribe()
+sw.destroy()
+```
+
+## Out of scope (v1)
+
+- Pause vs stop distinctions beyond `stop`
+- Lap times
+- Countdown / Ticker
+- Persistence / workers / multiplayer
