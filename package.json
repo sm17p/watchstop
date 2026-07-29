@@ -4,10 +4,11 @@
   "type": "module",
   "packageManager": "pnpm@10.34.4",
   "scripts": {
-    "docs:dev": "pnpm --filter @watchstop/docs dev",
-    "build": "node ./scripts/run-if-packages.mjs tsdown",
-    "test": "node ./scripts/run-if-packages.mjs vitest run",
-    "typecheck": "tsgo -b"
+    "docs": "mise run docs",
+    "docs:dev": "mise run docs:dev",
+    "build": "mise run build",
+    "test": "mise run test",
+    "typecheck": "mise run typecheck"
   },
   "devDependencies": {
     "@typescript/native-preview": "latest",

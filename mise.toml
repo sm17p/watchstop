@@ -1,0 +1,44 @@
+min_version = "2024.9.5"
+
+[tools]
+node = "26"
+pnpm = "10.34.4"
+
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[tasks.build]
+description = "Build packages with tsdown (no-op when packages/ is empty)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+if ls packages/*/package.json >/dev/null 2>&1; then
+  tsdown
+else
+  echo 'No packages yet; skipping.'
+fi
+"""
+
+[tasks.test]
+description = "Run vitest (no-op when packages/ is empty)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+if ls packages/*/package.json >/dev/null 2>&1; then
+  vitest run
+else
+  echo 'No packages yet; skipping.'
+fi
+"""
+
+[tasks.typecheck]
+description = "Typecheck the workspace with tsgo"
+run = "tsgo -b"
+
+[tasks.docs]
+description = "Build the docs app"
+run = "pnpm --filter @watchstop/docs build"
+
+[tasks."docs:dev"]
+description = "Start the docs dev server"
+run = "pnpm --filter @watchstop/docs dev"

@@ -32,3 +32,5 @@ No timing logic in adapters — only `get` / `subscribe` bridges.
 2. Implement `@watchstop/core` + Vitest until green
 3. Then Wave 1 adapters, then Wave 2
 4. Fill framework docs only after code ships
+
+Root tasks live in `mise.toml` (`mise run build|test|typecheck|docs|docs:dev`). `pnpm <script>` delegates to the same mise tasks.
