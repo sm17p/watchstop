@@ -83,13 +83,15 @@ While **stopped**, visible elapsed is `accumulated`.
 ### `get(): number`
 
 - If destroyed, return the last frozen elapsed (typically `accumulated` after destroy’s stop), or `0` if never started — pick one and keep it stable: **return `accumulated` after destroy completes its internal stop**.
-- If running, return live `accumulated + (clock.now() - startTime)`.
+- If running, return **live** `accumulated + (clock.now() - startTime)` as of the call (not only last tick). Required for vanilla / Node.
 - If stopped, return `accumulated`.
 - Units: **milliseconds** as a finite number (`>= 0` under normal clocks).
+- There is no separate `peek()` API. React adapters must not use live `get` as `useSyncExternalStore`’s `getSnapshot` — see [Store](/docs/core/store) and [React](/docs/frameworks/react).
 
 ### `subscribe(listener: (elapsed: number) => void): () => void`
 
-- See [Store](/docs/core/store).
+- See [Store](/docs/core/store), including **listener reentrancy** rules.
+- Subscribers fire only on clock ticks and on mutating controls as specified (`start` / `stop` / `reset` / `destroy`).
 - If `destroyed`, `subscribe` returns a no-op unsubscribe and does not retain the listener.
 
 ### `destroy(): void`
@@ -120,6 +122,7 @@ Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Sto
 | `start` after `reset` | Fresh segment from 0 |
 | `destroy` while running | Stops and freezes elapsed; clears listeners |
 | Listener throws | Other listeners still run |
+| Listener reentrancy | Added listeners miss current wave; removed skip rest of wave; controls allowed; `destroy` clears so remaining cleared listeners are skipped |
 | `cancel` after natural fire | Idempotent; no throw |
 
 ## Usage

@@ -25,6 +25,8 @@ From `@watchstop/core`.
 
 `16` approximates a 60 Hz UI tick for headless use. Callers may choose `100`, `1000`, etc. for coarser updates.
 
+If `intervalMs` is provided and is not a finite number `> 0`, `createTimerClock` **throws** (`RangeError`). The default `16` is always valid.
+
 ## Behavior
 
 | Method | Implementation |

@@ -9,7 +9,7 @@ importers:
   .:
     devDependencies:
       '@typescript/native-preview':
-        specifier: latest
+        specifier: 7.0.0-dev.20260707.2
         version: 7.0.0-dev.20260707.2
       tsdown:
         specifier: ^0.22.14

@@ -23,7 +23,8 @@ From `@watchstop/core`.
 
 ## Requirements
 
-- Assumes a DOM-like global with `requestAnimationFrame`, `cancelAnimationFrame`, and `performance.now`.
+- Requires a DOM-like global with `requestAnimationFrame`, `cancelAnimationFrame`, and `performance.now`.
+- If `requestAnimationFrame` or `cancelAnimationFrame` is missing (not a function), `createBrowserClock()` **throws**.
 - Do **not** import `node:` modules.
 - `schedule` must not call `cb` synchronously.
 

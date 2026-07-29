@@ -31,7 +31,7 @@ Export this type from `@watchstop/core` as `Clock`.
 - Arranges for `callback` to run once in the future (next animation frame, next timer interval, or mock queue).
 - Returns an opaque `handle` that `cancel` understands.
 - Must not invoke `callback` synchronously inside `schedule`.
-- If the clock is destroyed or the environment is shutting down, scheduling may become a no-op that still returns a cancelable handle or a sentinel; document behavior per factory. Default: schedule still returns a handle; cancel is safe.
+- Clocks have **no** `destroy` method. Factories document missing-API failures (e.g. browser clock throws when `requestAnimationFrame` is absent). Cancel remains safe on expired or unknown handles.
 
 ### `cancel(handle: unknown): void`
 

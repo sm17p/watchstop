@@ -8,45 +8,57 @@ description: Mock clock with controllable advance for deterministic tests.
 ## Export
 
 ```ts
+type MockClockOptions = {
+  frameDelay?: number
+}
+
 interface MockClock extends Clock {
   advance(ms: number): void
 }
 
-function createMockClock(): MockClock
+function createMockClock(options?: MockClockOptions): MockClock
 ```
 
 From `@watchstop/core`.
 
-## Behavior
+## Options
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `frameDelay` | `0` | Added to `now()` when computing each schedule’s due time |
+
+If `frameDelay` is provided and is not a finite number `>= 0`, **throw** (`RangeError`).
+
+## Normative algorithm
+
+Keep:
+
+- `currentTime` — starts at `0`
+- a pending list of `{ handle, callback, dueTime }`
 
 ### `now()`
 
-Returns an internal monotonic counter starting at `0` (or any fixed origin — document as starting at `0`).
+Returns `currentTime`.
 
 ### `schedule(callback)`
 
-- Stores `callback` in a queue keyed by an opaque handle.
-- Does **not** run `callback` until `advance` reaches/passes the scheduled time, **or** you may model schedules as “run on next `advance` that moves time by any positive amount” if using a simple queue.
-
-**Normative simple model (recommended):**
-
-- Each `schedule` enqueues `{ handle, callback }` with `due = now() + 0` meaning “run on next flush”, **or** `due = now()` and `advance(ms)` increases `now` then runs all due callbacks with `due <= now`.
-- Recommended: treat each `schedule` as due immediately at the **current** `now` but deferred until the next `advance` call that flushes the queue (even `advance(0)` may flush — prefer requiring `advance(ms)` with `ms >= 0` and flush callbacks due at `<= now` after bumping time).
-
-**Concrete recommended algorithm:**
-
-1. Keep `currentTime` (start `0`) and a list of `{ handle, callback, dueTime }`.
-2. `schedule(cb)` assigns `dueTime = currentTime` (or `currentTime + frameDelay` with `frameDelay = 0` or `16`). Use **`dueTime = currentTime`** and only flush on `advance`, so `schedule` itself never runs `cb` sync.
-3. `advance(ms)`: require `ms >= 0`; set `currentTime += ms`; then run all callbacks with `dueTime <= currentTime` in insertion order; remove them; callbacks may call `schedule` again during flush — those new items get `dueTime = currentTime` and wait until a **subsequent** `advance` (do not re-enter infinitely in the same flush).
+1. Assign an opaque `handle`.
+2. Enqueue `{ handle, callback, dueTime: currentTime + frameDelay }`.
+3. Return `handle`.
+4. Must **not** run `callback` synchronously inside `schedule`.
 
 ### `cancel(handle)`
 
-Removes the pending entry if present; idempotent.
+Remove the pending entry if present. Idempotent; must not throw.
 
 ### `advance(ms: number): void`
 
-- Advances mock time by `ms` milliseconds (`ms` must be finite and `>= 0`; invalid input may throw or no-op — prefer throw `RangeError` on negative/`NaN`).
-- Flushes due scheduled callbacks as above.
+1. If `ms` is not a finite number `>= 0`, **throw** (`RangeError`).
+2. Set `currentTime += ms`.
+3. **Single-pass flush:** collect every pending entry with `dueTime <= currentTime`, stable-sorted by `dueTime` then insertion order; remove them from the pending list; invoke each `callback` in that order.
+4. Callbacks invoked during this pass may call `schedule` / `cancel`. Newly scheduled entries are **not** flushed in this `advance` — they wait for a later `advance` (including `advance(0)` when already due).
+
+Single-pass is required so Stopwatch’s tick loop (`schedule` → notify → `schedule` again) with default `frameDelay: 0` cannot spin forever inside one `advance`.
 
 ## Usage with Stopwatch
 

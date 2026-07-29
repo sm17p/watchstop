@@ -14,8 +14,8 @@ Machine indexes: [`/llms.txt`](/llms.txt), [`/llms-full.txt`](/llms-full.txt).
 1. Scaffold `packages/core` with **tsdown** (`format: ['esm','cjs']`, `dts: true`) and Vitest.
 2. Implement clocks: `createMockClock`, `createBrowserClock`, `createTimerClock`, `detectClock`.
 3. Implement `Stopwatch`.
-4. Export public API from package entry exactly as named below.
-5. Typecheck with **TS7 (`tsgo`)**; `pnpm test` + `pnpm build` green.
+4. Export public API from package entry exactly as named below. **Also** add a `packages/core` tsconfig and register it in the root `tsconfig.json` `references` array (root refs are empty today; `pnpm typecheck` / `tsgo -b` needs the project reference). Public APIs need **explicit return types** because `tsconfig.base.json` sets `isolatedDeclarations: true`.
+5. Typecheck with **TS7 (`tsgo`)**; `pnpm test` + `pnpm build` green. Dev dependency `@typescript/native-preview` is pinned in root `package.json` (not `latest`).
 6. Only then Wave 1 / Wave 2 adapters.
 
 ## Exact public names
@@ -30,6 +30,10 @@ interface Clock {
 interface Store<T> {
   get(): T
   subscribe(listener: (value: T) => void): () => void
+}
+
+type MockClockOptions = {
+  frameDelay?: number
 }
 
 interface MockClock extends Clock {
@@ -52,7 +56,7 @@ declare class Stopwatch implements Store<number> {
 
 declare function createBrowserClock(): Clock
 declare function createTimerClock(options?: TimerClockOptions): Clock
-declare function createMockClock(): MockClock
+declare function createMockClock(options?: MockClockOptions): MockClock
 declare function detectClock(): Clock
 ```
 
@@ -63,11 +67,11 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 ### Clocks
 
 - [ ] `createMockClock().now()` starts at `0` and increases only via `advance`.
-- [ ] `schedule` never runs the callback synchronously.
-- [ ] `advance(ms)` runs due callbacks; nested `schedule` during flush waits for a later `advance`.
+- [ ] `schedule` enqueues with `dueTime = now + frameDelay` (default `frameDelay: 0`) and never runs the callback synchronously.
+- [ ] `advance(ms)` throws if `ms` is not finite `>= 0`; otherwise bumps `now` and single-pass flushes due callbacks (stable by due time); nested `schedule` during flush waits for a later `advance`.
 - [ ] `cancel` is idempotent and prevents the callback.
-- [ ] `createTimerClock({ intervalMs })` uses that delay for `setTimeout`.
-- [ ] `createBrowserClock` uses rAF + `performance.now` (skip or mock in Node unit tests; guard with feature detection).
+- [ ] `createTimerClock({ intervalMs })` uses that delay for `setTimeout`; throws if `intervalMs` is not finite `> 0`.
+- [ ] `createBrowserClock` uses rAF + `performance.now`; throws if `requestAnimationFrame` / `cancelAnimationFrame` missing (skip or mock in Node unit tests).
 - [ ] `detectClock()` returns browser clock when `requestAnimationFrame` is a function, else timer clock.
 - [ ] No `node:` imports required for the browser-safe build entry.
 
@@ -75,7 +79,8 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 
 - [ ] Default construction uses `detectClock()`.
 - [ ] Initial `get()` is `0`; not running.
-- [ ] `start` → `advance` → `get()` reflects elapsed; subscribers receive updates.
+- [ ] `get()` while running is **live** elapsed (as of the call), not only last tick.
+- [ ] `start` → `advance` → `get()` reflects elapsed; subscribers receive updates on ticks / mutating controls.
 - [ ] `stop` freezes elapsed; further `advance` does not change `get()`.
 - [ ] Second `start` after `stop` resumes from accumulated total.
 - [ ] Double `start` / double `stop` are no-ops.
@@ -83,6 +88,7 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 - [ ] `subscribe` unsubscribe is idempotent; no calls after unsubscribe.
 - [ ] Multiple subscribers all receive updates.
 - [ ] Throwing listener does not block other listeners.
+- [ ] Notify reentrancy: newly added listeners miss the current wave; removed listeners are not called again in that wave; `start`/`stop`/`reset`/`destroy` from a listener are allowed; `destroy` clears listeners so remaining cleared listeners in the wave are skipped.
 - [ ] `destroy` stops ticks, clears listeners, freezes `get()`, ignores later `start`/`stop`/`reset`.
 - [ ] `subscribe` after `destroy` does not retain listeners.
 
@@ -90,7 +96,7 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 
 - [ ] Package name `@watchstop/core`.
 - [ ] `"type": "module"` with `exports` for `types` / `import` / `require`.
-- [ ] Built with tsdown; declarations emitted.
+- [ ] Built with tsdown; declarations emitted; public exports have explicit return types (`isolatedDeclarations`).
 - [ ] Vitest covers the checklist above via `createMockClock`.
 
 ## Adopter constraints (design pressure on Store)
@@ -99,9 +105,10 @@ Adapters must stay thin: **only** bridge `get` / `subscribe` (plus exposing `sta
 
 ### React (`@watchstop/react`) — Wave 1
 
-- Bind with `useSyncExternalStore(store.subscribe, store.get, store.get)`.
+- Bind with `useSyncExternalStore`.
+- **MUST NOT** pass live `store.get` / `stopwatch.get` as `getSnapshot`. Cache the value from `subscribe` (or a versioned snapshot updated only in the listener); `getSnapshot` returns that cached snapshot so it is stable between notifications.
 - Do not use `useState` + manual subscribe as the primary path.
-- SSR: `get` must be safe without `window`.
+- SSR: initial / server snapshot may use one `get()`; must be safe without `window`.
 
 ### Svelte (`@watchstop/svelte`) — Wave 1
 
@@ -138,6 +145,8 @@ Adapters must stay thin: **only** bridge `get` / `subscribe` (plus exposing `sta
 
 ### Docs-only (no package in v1)
 
+Vanilla, Preact, and Lit are **docs-only** — there is no `@watchstop/vanilla`, `@watchstop/preact`, or `@watchstop/lit` package.
+
 - **Vanilla:** use `Stopwatch` + DOM updates in `subscribe`.
 - **Preact:** prefer `@watchstop/react` when compat allows, or core directly.
 - **Lit:** subscribe in `connectedCallback`, unsubscribe in `disconnectedCallback`.
@@ -148,4 +157,4 @@ Change **core** + these docs + core tests first. Do not special-case timing or s
 
 ## Framework docs
 
-Framework pages under `/docs/frameworks/*` stay stubs until the matching package ships (Step 7). Agents implementing adapters should still follow the constraints above.
+Framework pages under `/docs/frameworks/*` stay stubs until the matching package ships (Step 7), except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Agents implementing adapters should still follow the constraints above.

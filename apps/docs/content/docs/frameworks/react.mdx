@@ -3,4 +3,16 @@ title: React
 description: "@watchstop/react adapter."
 ---
 
-Docs after core ships. Wave 1 adapter over `Store` via `useSyncExternalStore`.
+Wave 1 adapter over `Store` via `useSyncExternalStore`. Full API docs land after the package ships; the binding rule below is **normative** now.
+
+## `useSyncExternalStore` (normative)
+
+`Store.get()` / `Stopwatch.get()` returns the **live** value. React requires `getSnapshot` to be stable between notifications.
+
+`@watchstop/react` **MUST NOT** pass live `store.get` as `useSyncExternalStore`’s `getSnapshot`.
+
+Cache the value received via `subscribe` (or a versioned snapshot updated only in the listener). `getSnapshot` returns that cached snapshot. SSR / server snapshot may use a one-shot `get()` when the hook mounts.
+
+Do not use `useState` + manual subscribe as the primary path.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).

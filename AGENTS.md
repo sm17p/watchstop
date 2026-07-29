@@ -26,11 +26,11 @@ Core documentation under `apps/docs/content/docs` is the **source of truth**.
 
 No timing logic in adapters — only `get` / `subscribe` bridges.
 
+Vanilla, Preact, and Lit are docs-only guidance (no `@watchstop/preact`, `@watchstop/vanilla`, or `@watchstop/lit` package).
+
 ## Workflow
 
 1. Read `/docs/architecture`, `/docs/core/*`, `/docs/runtimes/*`, `/docs/agents`
 2. Implement `@watchstop/core` + Vitest until green
 3. Then Wave 1 adapters, then Wave 2
 4. Fill framework docs only after code ships
-
-Root tasks live in `mise.toml` (`mise run build|test|typecheck|docs|docs:dev`). `pnpm <script>` delegates to the same mise tasks.
