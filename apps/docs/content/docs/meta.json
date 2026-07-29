@@ -1,0 +1,14 @@
+{
+  "title": "Watchstop",
+  "pages": [
+    "index",
+    "architecture",
+    "agents",
+    "---Core---",
+    "core",
+    "---Runtimes---",
+    "runtimes",
+    "---Frameworks---",
+    "frameworks"
+  ]
+}

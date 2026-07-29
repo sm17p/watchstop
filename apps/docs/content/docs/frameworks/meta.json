@@ -1,0 +1,15 @@
+{
+  "title": "Frameworks",
+  "pages": [
+    "react",
+    "svelte",
+    "vue",
+    "solid",
+    "angular",
+    "qwik",
+    "alpine",
+    "vanilla",
+    "preact",
+    "lit"
+  ]
+}
