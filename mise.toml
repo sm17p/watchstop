@@ -51,3 +51,15 @@ set -euo pipefail
 pnpm --filter @watchstop/docs build
 pnpm --filter @watchstop/docs deploy
 """
+
+[tasks.changeset]
+description = "Create a changeset"
+run = "changeset"
+
+[tasks."version-packages"]
+description = "Apply changesets and bump package versions"
+run = "changeset version"
+
+[tasks.release]
+description = "Publish packages to npm via changesets"
+run = "changeset publish"
