@@ -4,11 +4,8 @@
     "index",
     "architecture",
     "agents",
-    "---Core---",
     "core",
-    "---Runtimes---",
     "runtimes",
-    "---Frameworks---",
     "frameworks"
   ]
 }
