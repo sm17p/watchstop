@@ -7,6 +7,8 @@ Wave 1 composables bridging `Store` into a shallow ref, cleaned up with `onScope
 
 ## Exact public names
 
+`useStopwatch` is the entire public API.
+
 ```ts
 type UseStopwatchOptions = {
   clock?: Clock
@@ -21,10 +23,9 @@ type StopwatchBinding = {
 }
 
 declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
-declare function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>>
 ```
 
-## `useStopwatch` — the common case
+## `useStopwatch`
 
 `useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
 
@@ -45,7 +46,7 @@ const { elapsed, start, stop, reset } = useStopwatch()
 
 - Construction is inert. Nothing is scheduled until `start()`.
 - `setup` runs once, so `start`, `stop`, and `reset` are bound once and keep the same identity for the life of the component.
-- `onScopeDispose` calls `destroy()` when the owning effect scope (component or `effectScope`) stops, after `useStore`'s own unsubscribe.
+- `onScopeDispose` calls `destroy()` when the owning effect scope (component or `effectScope`) stops, after the unsubscribe registered for the ref.
 - `elapsed` is a read-only shallow ref. `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself.
 
 ### Options
@@ -54,23 +55,11 @@ const { elapsed, start, stop, reset } = useStopwatch()
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
 
-## `useStore` — advanced
+## Sharing one stopwatch across components
 
-Use `useStore` when the component does not own the instance: a stopwatch shared through props or provide/inject, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
+Not supported in v1. Each `useStopwatch()` call constructs and owns its own instance, so two components calling it get two unrelated stopwatches, and there is no supported way to bind to a stopwatch passed through props, `provide` / `inject`, or a module-level singleton.
 
-```vue
-<script setup lang="ts">
-import { Stopwatch } from '@watchstop/core'
-import { useStore } from '@watchstop/vue'
-
-const props = defineProps<{ stopwatch: Stopwatch }>()
-const elapsed = useStore(props.stopwatch)
-</script>
-
-<template>
-  <p>{{ elapsed }} ms</p>
-</template>
-```
+`Stopwatch` is the only `Store` in core today, so a generic composable for instances the component does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, subscribe to the shared instance directly with `Stopwatch.subscribe` and write into your own `shallowRef`.
 
 ## Contract
 

@@ -7,6 +7,8 @@ Wave 1 adapter over `Store` via `useSyncExternalStore`. `@watchstop/core` is a p
 
 ## Exact public names
 
+`useStopwatch` is the entire public API.
+
 ```ts
 type UseStopwatchOptions = {
   clock?: Clock
@@ -21,10 +23,9 @@ type StopwatchBinding = {
 }
 
 declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
-declare function useStore<T>(store: Store<T>): T
 ```
 
-## `useStopwatch` — the common case
+## `useStopwatch`
 
 `useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
 
@@ -62,23 +63,11 @@ Passing a different `clock` destroys the current instance and builds a fresh one
 
 The instance is created with a lazy `useRef` and torn down in a `useEffect` cleanup — not `useMemo`, which React is free to discard. Strict Mode double-invokes mount, so the cleanup destroys the instance and the re-run effect rebuilds it and republishes the new instance to the caller. No destroyed instance and no orphaned ticking stopwatch survives the remount.
 
-## `useStore` — advanced
+## Sharing one stopwatch across components
 
-Use `useStore` when the component does not own the instance: a stopwatch shared through props or context, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
+Not supported in v1. Each `useStopwatch()` call constructs and owns its own instance, so two components calling it get two unrelated stopwatches, and there is no supported way to bind to a stopwatch passed through props, context, or a module-level singleton.
 
-```tsx
-import { Stopwatch } from '@watchstop/core'
-import { useStore } from '@watchstop/react'
-
-const shared = new Stopwatch()
-
-export function SharedReadout() {
-  const elapsed = useStore(shared)
-  return <p>{elapsed} ms</p>
-}
-```
-
-`useStore` returns the value, not the store. Controls stay on the `Stopwatch` you own.
+`Stopwatch` is the only `Store` in core today, so a generic primitive for instances the component does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, subscribe to the shared instance directly with `Stopwatch.subscribe` and hold the value in your own state — and read the normative rule below first, because a hand-rolled `useSyncExternalStore` binding is exactly where it bites.
 
 ## Re-render cost
 

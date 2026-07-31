@@ -105,7 +105,9 @@ Adapters must stay thin: **only** construct a `Stopwatch` and bridge `get` / `su
 
 ### Exact public names (Wave 1)
 
-Every Wave 1 adapter ships two exports: an **instance-owning** entry point for the common case, and the **primitive** bridge for instances the component does not own.
+Every Wave 1 adapter ships exactly **one** entry point: the instance-owning binding, plus its option and return types. A component either owns its stopwatch or does not use the adapter.
+
+The generic `Store<T>` bridge each adapter uses internally is **not** public API. `Stopwatch` is the only `Store` in core today, so exporting a primitive over the type family would fix a shared-instance API before there is a second store to validate it against. Deferred to [issue #6](https://github.com/sm17p/watchstop/issues/6) and revisited when `Countdown` / `Ticker` land; adding an export later is not a breaking change.
 
 `@watchstop/react`:
 
@@ -121,7 +123,6 @@ type StopwatchBinding = {
 }
 
 declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
-declare function useStore<T>(store: Store<T>): T
 ```
 
 `@watchstop/vue`:
@@ -138,7 +139,6 @@ type StopwatchBinding = {
 }
 
 declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
-declare function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>>
 ```
 
 `@watchstop/solid`:
@@ -155,7 +155,6 @@ type StopwatchBinding = {
 }
 
 declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
-declare function useStore<T>(store: Store<T>): Accessor<T>
 ```
 
 `@watchstop/svelte`:
@@ -171,10 +170,9 @@ type StopwatchStore = Readable<number> & {
 }
 
 declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchStore
-declare function toSvelteStore<T>(store: Store<T>): Readable<T>
 ```
 
-React, Vue, and Solid keep the `useStore` / `useStopwatch` names their ecosystems expect. Svelte uses `createStopwatch` and `toSvelteStore` because `svelte/store` already exports `fromStore` / `toStore` for the opposite conversion.
+React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosystems expect. Svelte uses `createStopwatch` because `svelte/store` already exports `fromStore` / `toStore` for converting between stores and runes.
 
 ### Rules for the instance-owning entry points
 

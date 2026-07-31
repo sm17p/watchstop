@@ -7,6 +7,8 @@ Wave 1 adapter exposing `Store` as a Svelte readable store so `$` auto-subscript
 
 ## Exact public names
 
+`createStopwatch` is the entire public API.
+
 ```ts
 type CreateStopwatchOptions = {
   clock?: Clock
@@ -20,12 +22,11 @@ type StopwatchStore = Readable<number> & {
 }
 
 declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchStore
-declare function toSvelteStore<T>(store: Store<T>): Readable<T>
 ```
 
-The conversion helper is named `toSvelteStore`, not `fromStore`. `svelte/store` already exports `fromStore` / `toStore` for converting between Svelte stores and runes, and those convert in the opposite direction.
+It is named `createStopwatch`, not `fromStore` or `toStore`. `svelte/store` already exports both of those for converting between Svelte stores and runes.
 
-## `createStopwatch` — the common case
+## `createStopwatch`
 
 `createStopwatch` owns a `Stopwatch` and returns the Svelte custom-store shape: a `subscribe` for `$` auto-subscription plus callable controls on the same object.
 
@@ -61,32 +62,17 @@ It deliberately does **not** destroy on last-unsubscribe, which is what `svelte/
 
 Calling `createStopwatch()` outside component initialisation — at module level, for a singleton — is allowed and simply registers no automatic teardown. Call `stopwatch.stopwatch.destroy()` yourself in that case.
 
-## `toSvelteStore` — advanced
+## Sharing one stopwatch across components
 
-Use `toSvelteStore` when the component does not own the instance: a stopwatch passed in as a prop or through context, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
+Not supported in v1. Each `createStopwatch()` call constructs and owns its own instance, so two components calling it get two unrelated stopwatches, and there is no supported way to wrap a stopwatch handed in as a prop or through context.
 
-```svelte
-<script lang="ts">
-  import { onDestroy } from 'svelte'
-  import { Stopwatch } from '@watchstop/core'
-  import { toSvelteStore } from '@watchstop/svelte'
-
-  const stopwatch = new Stopwatch()
-  const elapsed = toSvelteStore(stopwatch)
-
-  onDestroy(() => stopwatch.destroy())
-</script>
-
-<p>{$elapsed} ms</p>
-<button onclick={() => stopwatch.start()}>Start</button>
-<button onclick={() => stopwatch.stop()}>Stop</button>
-```
+`Stopwatch` is the only `Store` in core today, so a generic `Store<T>` → readable helper for instances the component does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, share the store object a single `createStopwatch()` call returns — a module-level call registers no automatic teardown, as above, and `$store` auto-subscription works from any component that imports it.
 
 ## Contract
 
-- `subscribe` calls the listener synchronously with `store.get()` before registering it.
-- The returned unsubscribe function is `store.subscribe`'s own, so `$` auto-subscription cleanup unsubscribes from the underlying `Store`.
-- `toSvelteStore` is value-only; controls stay on the `Stopwatch`.
+- `subscribe` calls the listener synchronously with the current elapsed value before registering it, as Svelte's readable contract requires.
+- The returned unsubscribe function is the underlying `Stopwatch.subscribe`'s own, so `$` auto-subscription cleanup unsubscribes from the instance.
+- The `Readable` half is value-only; controls are callable properties on the same object.
 
 ## Re-render cost
 

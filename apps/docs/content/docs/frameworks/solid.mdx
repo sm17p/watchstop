@@ -7,6 +7,8 @@ Wave 1 adapter bridging `Store` into a signal, unsubscribed with `onCleanup`. `@
 
 ## Exact public names
 
+`useStopwatch` is the entire public API.
+
 ```ts
 type UseStopwatchOptions = {
   clock?: Clock
@@ -21,10 +23,9 @@ type StopwatchBinding = {
 }
 
 declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
-declare function useStore<T>(store: Store<T>): Accessor<T>
 ```
 
-## `useStopwatch` — the common case
+## `useStopwatch`
 
 `useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
 
@@ -47,7 +48,7 @@ export function Timer() {
 
 - Construction is inert. Nothing is scheduled until `start()`.
 - A Solid component body runs once, so `start`, `stop`, and `reset` are bound once and keep the same identity for the life of the component.
-- `onCleanup` calls `destroy()` when the owning reactive root or component disposes, after `useStore`'s own unsubscribe.
+- `onCleanup` calls `destroy()` when the owning reactive root or component disposes, after the unsubscribe registered for the signal.
 - `elapsed` is a read-only accessor. `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself.
 
 ### Options
@@ -56,19 +57,11 @@ export function Timer() {
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
 
-## `useStore` — advanced
+## Sharing one stopwatch across components
 
-Use `useStore` when the component does not own the instance: a stopwatch shared through props or context, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
+Not supported in v1. Each `useStopwatch()` call constructs and owns its own instance, so two components calling it get two unrelated stopwatches, and there is no supported way to bind to a stopwatch passed through props, context, or a module-level singleton.
 
-```tsx
-import type { Stopwatch } from '@watchstop/core'
-import { useStore } from '@watchstop/solid'
-
-export function Readout(props: { stopwatch: Stopwatch }) {
-  const elapsed = useStore(props.stopwatch)
-  return <p>{elapsed()} ms</p>
-}
-```
+`Stopwatch` is the only `Store` in core today, so a generic primitive for instances the component does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, subscribe to the shared instance directly with `Stopwatch.subscribe` and write into your own signal.
 
 ## Contract
 
