@@ -1,1 +1,1 @@
-export { fromStore } from './from-store.js'
+export { toSvelteStore } from './to-svelte-store.js'

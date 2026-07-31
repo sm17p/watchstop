@@ -103,6 +103,17 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 
 Adapters must stay thin: **only** bridge `get` / `subscribe` (plus exposing `start`/`stop`/`reset`/`destroy` if the adapter’s API includes controls). No clocks or elapsed math in adapters.
 
+### Exact public names (Wave 1)
+
+```ts
+declare function useStore<T>(store: Store<T>): T // @watchstop/react
+declare function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>> // @watchstop/vue
+declare function useStore<T>(store: Store<T>): Accessor<T> // @watchstop/solid
+declare function toSvelteStore<T>(store: Store<T>): Readable<T> // @watchstop/svelte
+```
+
+Each adapter has exactly one export. React, Vue, and Solid keep the `useStore` name their ecosystems expect. Svelte uses `toSvelteStore` because `svelte/store` already exports `fromStore` / `toStore` for the opposite conversion.
+
 ### React (`@watchstop/react`) — Wave 1
 
 - Bind with `useSyncExternalStore`.
@@ -114,6 +125,7 @@ Adapters must stay thin: **only** bridge `get` / `subscribe` (plus exposing `sta
 
 - Expose a readable-store shape (`subscribe` compatible with `$store` auto-subscription).
 - May wrap `Stopwatch` or implement the readable contract by delegating to `subscribe`/`get`.
+- `subscribe` must call the listener synchronously with `get()` before registering it, per Svelte's readable contract.
 
 ### Vue (`@watchstop/vue`) — Wave 1
 
@@ -157,4 +169,4 @@ Change **core** + these docs + core tests first. Do not special-case timing or s
 
 ## Framework docs
 
-Framework pages under `/docs/frameworks/*` stay stubs until the matching package ships (Step 7), except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Agents implementing adapters should still follow the constraints above.
+Framework pages under `/docs/frameworks/*` stay stubs until the matching package ships (Step 7), except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Wave 1 has shipped, so [React](/docs/frameworks/react), [Svelte](/docs/frameworks/svelte), [Vue](/docs/frameworks/vue), and [Solid](/docs/frameworks/solid) document their real API. Agents implementing Wave 2 adapters should still follow the constraints above.

@@ -3,4 +3,39 @@ title: Svelte
 description: "@watchstop/svelte adapter."
 ---
 
-Docs after core ships. Wave 1 adapter exposing a readable-store shape.
+Wave 1 adapter converting a `Store` into a Svelte readable store so `$` auto-subscription works.
+
+## Exact public name
+
+```ts
+declare function toSvelteStore<T>(store: Store<T>): Readable<T>
+```
+
+The name is `toSvelteStore`, not `fromStore`. `svelte/store` already exports `fromStore` / `toStore` for converting between Svelte stores and runes, and those convert in the opposite direction.
+
+## Usage
+
+```svelte
+<script lang="ts">
+  import { onDestroy } from 'svelte'
+  import { Stopwatch } from '@watchstop/core'
+  import { toSvelteStore } from '@watchstop/svelte'
+
+  const stopwatch = new Stopwatch()
+  const elapsed = toSvelteStore(stopwatch)
+
+  onDestroy(() => stopwatch.destroy())
+</script>
+
+<p>{$elapsed} ms</p>
+<button onclick={() => stopwatch.start()}>Start</button>
+<button onclick={() => stopwatch.stop()}>Stop</button>
+```
+
+## Contract
+
+- `subscribe` calls the listener synchronously with `store.get()` before registering it, as Svelte's readable contract requires.
+- The returned unsubscribe function is `store.subscribe`'s own, so `$` auto-subscription cleanup unsubscribes from the underlying `Store`.
+- Controls stay on the `Stopwatch`; the readable store is value-only. Call `destroy()` on the stopwatch yourself.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).
