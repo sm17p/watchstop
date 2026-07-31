@@ -25,12 +25,11 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@watchstop/core": "workspace:^",
     "svelte": "^5.0.0"
   },
-  "dependencies": {
-    "@watchstop/core": "workspace:^"
-  },
   "devDependencies": {
+    "@watchstop/core": "workspace:^",
     "svelte": "^5.39.0"
   }
 }

@@ -25,12 +25,11 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@watchstop/core": "workspace:^",
     "vue": "^3.5.0"
   },
-  "dependencies": {
-    "@watchstop/core": "workspace:^"
-  },
   "devDependencies": {
+    "@watchstop/core": "workspace:^",
     "vue": "^3.5.22"
   }
 }
