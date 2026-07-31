@@ -3,4 +3,41 @@ title: Solid
 description: "@watchstop/solid adapter."
 ---
 
-Docs after core ships. Wave 1 signal + `onCleanup` bridge.
+Wave 1 adapter bridging `Store` into a signal, unsubscribed with `onCleanup`.
+
+## Exact public name
+
+```ts
+declare function useStore<T>(store: Store<T>): Accessor<T>
+```
+
+## Usage
+
+```tsx
+import { onCleanup } from 'solid-js'
+import { Stopwatch } from '@watchstop/core'
+import { useStore } from '@watchstop/solid'
+
+export function Timer() {
+  const stopwatch = new Stopwatch()
+  const elapsed = useStore(stopwatch)
+
+  onCleanup(() => stopwatch.destroy())
+
+  return (
+    <>
+      <p>{elapsed()} ms</p>
+      <button onClick={() => stopwatch.start()}>Start</button>
+      <button onClick={() => stopwatch.stop()}>Stop</button>
+    </>
+  )
+}
+```
+
+## Contract
+
+- The signal starts at `store.get()` and is written only from `subscribe`.
+- `onCleanup` unsubscribes when the owning reactive root or component disposes.
+- The accessor is read-only; controls stay on the `Stopwatch`.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).

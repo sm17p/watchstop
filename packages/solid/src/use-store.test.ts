@@ -8,19 +8,19 @@ describe('useStore', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const stopwatch = new Stopwatch(clock)
 
-    const { disposeRoot, value } = createRoot((disposeRoot) => {
-      const value = useStore(stopwatch)
-      expect(value()).toBe(0)
+    const { disposeRoot, elapsed } = createRoot((disposeRoot) => {
+      const elapsed = useStore(stopwatch)
+      expect(elapsed()).toBe(0)
 
       stopwatch.start()
       clock.advance(16)
-      expect(value()).toBe(16)
+      expect(elapsed()).toBe(16)
 
-      return { disposeRoot, value }
+      return { disposeRoot, elapsed }
     })
 
     disposeRoot()
     clock.advance(16)
-    expect(value()).toBe(16)
+    expect(elapsed()).toBe(16)
   })
 })

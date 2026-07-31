@@ -3,7 +3,36 @@ title: React
 description: "@watchstop/react adapter."
 ---
 
-Wave 1 adapter over `Store` via `useSyncExternalStore`. Full API docs land after the package ships; the binding rule below is **normative** now.
+Wave 1 adapter over `Store` via `useSyncExternalStore`.
+
+## Exact public name
+
+```ts
+declare function useStore<T>(store: Store<T>): T
+```
+
+`useStore` returns the value, not the store. Controls stay on the `Stopwatch` you own.
+
+## Usage
+
+```tsx
+import { useMemo } from 'react'
+import { Stopwatch } from '@watchstop/core'
+import { useStore } from '@watchstop/react'
+
+export function Timer() {
+  const stopwatch = useMemo(() => new Stopwatch(), [])
+  const elapsed = useStore(stopwatch)
+
+  return (
+    <>
+      <p>{elapsed} ms</p>
+      <button onClick={() => stopwatch.start()}>Start</button>
+      <button onClick={() => stopwatch.stop()}>Stop</button>
+    </>
+  )
+}
+```
 
 ## `useSyncExternalStore` (normative)
 

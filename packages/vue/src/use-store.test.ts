@@ -8,16 +8,16 @@ describe('useStore', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const stopwatch = new Stopwatch(clock)
     const scope = effectScope()
-    const value = scope.run(() => useStore(stopwatch))
+    const elapsed = scope.run(() => useStore(stopwatch))
 
-    expect(value?.value).toBe(0)
+    expect(elapsed?.value).toBe(0)
 
     stopwatch.start()
     clock.advance(16)
-    expect(value?.value).toBe(16)
+    expect(elapsed?.value).toBe(16)
 
     scope.stop()
     clock.advance(16)
-    expect(value?.value).toBe(16)
+    expect(elapsed?.value).toBe(16)
   })
 })

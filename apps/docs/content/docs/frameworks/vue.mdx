@@ -3,4 +3,39 @@ title: Vue
 description: "@watchstop/vue adapter."
 ---
 
-Docs after core ships. Wave 1 composable + `ref` bridge.
+Wave 1 composable bridging `Store` into a shallow ref, cleaned up with `onScopeDispose`.
+
+## Exact public name
+
+```ts
+declare function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>>
+```
+
+## Usage
+
+```vue
+<script setup lang="ts">
+import { onUnmounted } from 'vue'
+import { Stopwatch } from '@watchstop/core'
+import { useStore } from '@watchstop/vue'
+
+const stopwatch = new Stopwatch()
+const elapsed = useStore(stopwatch)
+
+onUnmounted(() => stopwatch.destroy())
+</script>
+
+<template>
+  <p>{{ elapsed }} ms</p>
+  <button @click="stopwatch.start()">Start</button>
+  <button @click="stopwatch.stop()">Stop</button>
+</template>
+```
+
+## Contract
+
+- The ref starts at `store.get()` and is written only from `subscribe`.
+- `onScopeDispose` unsubscribes when the owning effect scope (component or `effectScope`) stops.
+- The returned ref is read-only; controls stay on the `Stopwatch`.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).

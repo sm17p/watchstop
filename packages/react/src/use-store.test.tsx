@@ -30,14 +30,14 @@ describe('useStore', () => {
     expect(result.current).toBe(16)
   })
 
-  it('getSnapshot stays stable between notifications', () => {
+  it('returns the same value across rerenders without a notification', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const stopwatch = new Stopwatch(clock)
-    const snapshots: number[] = []
+    const rendered: number[] = []
     const { result, rerender } = renderHook(() => {
-      const value = useStore(stopwatch)
-      snapshots.push(value)
-      return value
+      const elapsed = useStore(stopwatch)
+      rendered.push(elapsed)
+      return elapsed
     })
 
     act(() => {
@@ -46,8 +46,8 @@ describe('useStore', () => {
     })
     expect(result.current).toBe(16)
 
-    const afterTick = snapshots.at(-1)
+    const afterTick = rendered.at(-1)
     rerender()
-    expect(snapshots.at(-1)).toBe(afterTick)
+    expect(rendered.at(-1)).toBe(afterTick)
   })
 })
