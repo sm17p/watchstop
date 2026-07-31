@@ -13,3 +13,14 @@ mise run docs:dev
 ```
 
 See [AGENTS.md](./AGENTS.md) for agent implementation rules. Core docs under `/docs` are the source of truth.
+
+## Versioning
+
+Public `@watchstop/*` packages use [Changesets](https://github.com/changesets/changesets) (independent versions; `@watchstop/docs` is ignored). After a meaningful change:
+
+```sh
+pnpm changeset
+# or: mise run changeset
+```
+
+Version with `pnpm version-packages`, publish with `pnpm release` (do not publish from routine PR work).

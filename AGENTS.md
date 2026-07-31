@@ -34,3 +34,7 @@ Vanilla, Preact, and Lit are docs-only guidance (no `@watchstop/preact`, `@watch
 2. Implement `@watchstop/core` + Vitest until green
 3. Then Wave 1 adapters, then Wave 2
 4. Fill framework docs only after code ships
+
+## Changesets
+
+For user-facing package changes, add a changeset with `pnpm changeset` (or `mise run changeset`). Prefer independent versioning; ignore `@watchstop/docs`. Do not run `changeset publish` unless releasing.

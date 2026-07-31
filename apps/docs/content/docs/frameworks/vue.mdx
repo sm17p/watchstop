@@ -3,4 +3,74 @@ title: Vue
 description: "@watchstop/vue adapter."
 ---
 
-Docs after core ships. Wave 1 composable + `ref` bridge.
+Wave 1 composables bridging `Store` into a shallow ref, cleaned up with `onScopeDispose`. `@watchstop/core` is a peer dependency — install both.
+
+## Exact public names
+
+`useStopwatch` is the entire public API.
+
+```ts
+type UseStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchBinding = {
+  elapsed: Readonly<ShallowRef<number>>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+## `useStopwatch`
+
+`useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
+
+```vue
+<script setup lang="ts">
+import { useStopwatch } from '@watchstop/vue'
+
+const { elapsed, start, stop, reset } = useStopwatch()
+</script>
+
+<template>
+  <p>{{ elapsed }} ms</p>
+  <button @click="start">Start</button>
+  <button @click="stop">Stop</button>
+  <button @click="reset">Reset</button>
+</template>
+```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- `setup` runs once, so `start`, `stop`, and `reset` are bound once and keep the same identity for the life of the component.
+- `onScopeDispose` calls `destroy()` when the owning effect scope (component or `effectScope`) stops, after the unsubscribe registered for the ref.
+- `elapsed` is a read-only shallow ref. `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+## Sharing one stopwatch across components
+
+Not supported in v1. Each `useStopwatch()` call constructs and owns its own instance, so two components calling it get two unrelated stopwatches, and there is no supported way to bind to a stopwatch passed through props, `provide` / `inject`, or a module-level singleton.
+
+`Stopwatch` is the only `Store` in core today, so a generic composable for instances the component does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, subscribe to the shared instance directly with `Stopwatch.subscribe` and write into your own `shallowRef`.
+
+## Contract
+
+- The ref starts at `store.get()` and is written only from `subscribe`.
+- `onScopeDispose` unsubscribes when the owning effect scope stops.
+- The returned ref is read-only; controls stay on the `Stopwatch`.
+
+## Re-render cost
+
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the ref re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
+
+A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `elapsed` read in the smallest possible component.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).
