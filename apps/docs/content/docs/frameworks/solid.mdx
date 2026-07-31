@@ -3,34 +3,70 @@ title: Solid
 description: "@watchstop/solid adapter."
 ---
 
-Wave 1 adapter bridging `Store` into a signal, unsubscribed with `onCleanup`.
+Wave 1 adapter bridging `Store` into a signal, unsubscribed with `onCleanup`. `@watchstop/core` is a peer dependency — install both.
 
-## Exact public name
+## Exact public names
 
 ```ts
+type UseStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchBinding = {
+  elapsed: Accessor<number>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 declare function useStore<T>(store: Store<T>): Accessor<T>
 ```
 
-## Usage
+## `useStopwatch` — the common case
+
+`useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
 
 ```tsx
-import { onCleanup } from 'solid-js'
-import { Stopwatch } from '@watchstop/core'
-import { useStore } from '@watchstop/solid'
+import { useStopwatch } from '@watchstop/solid'
 
 export function Timer() {
-  const stopwatch = new Stopwatch()
-  const elapsed = useStore(stopwatch)
-
-  onCleanup(() => stopwatch.destroy())
+  const { elapsed, start, stop, reset } = useStopwatch()
 
   return (
     <>
       <p>{elapsed()} ms</p>
-      <button onClick={() => stopwatch.start()}>Start</button>
-      <button onClick={() => stopwatch.stop()}>Stop</button>
+      <button onClick={start}>Start</button>
+      <button onClick={stop}>Stop</button>
+      <button onClick={reset}>Reset</button>
     </>
   )
+}
+```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- A Solid component body runs once, so `start`, `stop`, and `reset` are bound once and keep the same identity for the life of the component.
+- `onCleanup` calls `destroy()` when the owning reactive root or component disposes, after `useStore`'s own unsubscribe.
+- `elapsed` is a read-only accessor. `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+## `useStore` — advanced
+
+Use `useStore` when the component does not own the instance: a stopwatch shared through props or context, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
+
+```tsx
+import type { Stopwatch } from '@watchstop/core'
+import { useStore } from '@watchstop/solid'
+
+export function Readout(props: { stopwatch: Stopwatch }) {
+  const elapsed = useStore(props.stopwatch)
+  return <p>{elapsed()} ms</p>
 }
 ```
 
@@ -39,5 +75,11 @@ export function Timer() {
 - The signal starts at `store.get()` and is written only from `subscribe`.
 - `onCleanup` unsubscribes when the owning reactive root or component disposes.
 - The accessor is read-only; controls stay on the `Stopwatch`.
+
+## Re-render cost
+
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the accessor updates roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
+
+A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `elapsed()` read inside the smallest possible reactive scope.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

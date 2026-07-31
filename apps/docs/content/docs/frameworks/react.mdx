@@ -3,36 +3,88 @@ title: React
 description: "@watchstop/react adapter."
 ---
 
-Wave 1 adapter over `Store` via `useSyncExternalStore`.
+Wave 1 adapter over `Store` via `useSyncExternalStore`. `@watchstop/core` is a peer dependency — install both.
 
-## Exact public name
+## Exact public names
 
 ```ts
+type UseStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchBinding = {
+  elapsed: number
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 declare function useStore<T>(store: Store<T>): T
 ```
 
-`useStore` returns the value, not the store. Controls stay on the `Stopwatch` you own.
+## `useStopwatch` — the common case
 
-## Usage
+`useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
 
 ```tsx
-import { useMemo } from 'react'
-import { Stopwatch } from '@watchstop/core'
-import { useStore } from '@watchstop/react'
+import { useStopwatch } from '@watchstop/react'
 
 export function Timer() {
-  const stopwatch = useMemo(() => new Stopwatch(), [])
-  const elapsed = useStore(stopwatch)
+  const { elapsed, start, stop, reset } = useStopwatch()
 
   return (
     <>
       <p>{elapsed} ms</p>
-      <button onClick={() => stopwatch.start()}>Start</button>
-      <button onClick={() => stopwatch.stop()}>Stop</button>
+      <button onClick={start}>Start</button>
+      <button onClick={stop}>Stop</button>
+      <button onClick={reset}>Reset</button>
     </>
   )
 }
 ```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- `start`, `stop`, and `reset` keep the same identity for the life of the component, so they are safe in dependency arrays and can be passed directly as event handlers.
+- `destroy()` runs in the effect cleanup on unmount, which cancels the scheduled tick loop and clears listeners.
+- `stopwatch` is the owned instance, exposed for passing to a child or reading `get()` outside render. Do not call `destroy()` on it yourself; the hook owns that.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+Passing a different `clock` destroys the current instance and builds a fresh one.
+
+### Strict Mode
+
+The instance is created with a lazy `useRef` and torn down in a `useEffect` cleanup — not `useMemo`, which React is free to discard. Strict Mode double-invokes mount, so the cleanup destroys the instance and the re-run effect rebuilds it and republishes the new instance to the caller. No destroyed instance and no orphaned ticking stopwatch survives the remount.
+
+## `useStore` — advanced
+
+Use `useStore` when the component does not own the instance: a stopwatch shared through props or context, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
+
+```tsx
+import { Stopwatch } from '@watchstop/core'
+import { useStore } from '@watchstop/react'
+
+const shared = new Stopwatch()
+
+export function SharedReadout() {
+  const elapsed = useStore(shared)
+  return <p>{elapsed} ms</p>
+}
+```
+
+`useStore` returns the value, not the store. Controls stay on the `Stopwatch` you own.
+
+## Re-render cost
+
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so a component reading it re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
+
+A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, render `elapsed` in the smallest possible component so the frame-rate re-render does not cascade through a subtree.
 
 ## `useSyncExternalStore` (normative)
 

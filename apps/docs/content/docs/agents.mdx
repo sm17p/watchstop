@@ -101,18 +101,93 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 
 ## Adopter constraints (design pressure on Store)
 
-Adapters must stay thin: **only** bridge `get` / `subscribe` (plus exposing `start`/`stop`/`reset`/`destroy` if the adapter’s API includes controls). No clocks or elapsed math in adapters.
+Adapters must stay thin: **only** construct a `Stopwatch` and bridge `get` / `subscribe` / `destroy` (plus exposing `start`/`stop`/`reset` if the adapter’s API includes controls). No clocks or elapsed math in adapters. Owning an instance and its teardown is allowed; reimplementing timing is not.
 
 ### Exact public names (Wave 1)
 
+Every Wave 1 adapter ships two exports: an **instance-owning** entry point for the common case, and the **primitive** bridge for instances the component does not own.
+
+`@watchstop/react`:
+
 ```ts
-declare function useStore<T>(store: Store<T>): T // @watchstop/react
-declare function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>> // @watchstop/vue
-declare function useStore<T>(store: Store<T>): Accessor<T> // @watchstop/solid
-declare function toSvelteStore<T>(store: Store<T>): Readable<T> // @watchstop/svelte
+type UseStopwatchOptions = { clock?: Clock }
+
+type StopwatchBinding = {
+  elapsed: number
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+declare function useStore<T>(store: Store<T>): T
 ```
 
-Each adapter has exactly one export. React, Vue, and Solid keep the `useStore` name their ecosystems expect. Svelte uses `toSvelteStore` because `svelte/store` already exports `fromStore` / `toStore` for the opposite conversion.
+`@watchstop/vue`:
+
+```ts
+type UseStopwatchOptions = { clock?: Clock }
+
+type StopwatchBinding = {
+  elapsed: Readonly<ShallowRef<number>>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+declare function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>>
+```
+
+`@watchstop/solid`:
+
+```ts
+type UseStopwatchOptions = { clock?: Clock }
+
+type StopwatchBinding = {
+  elapsed: Accessor<number>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+declare function useStore<T>(store: Store<T>): Accessor<T>
+```
+
+`@watchstop/svelte`:
+
+```ts
+type CreateStopwatchOptions = { clock?: Clock }
+
+type StopwatchStore = Readable<number> & {
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchStore
+declare function toSvelteStore<T>(store: Store<T>): Readable<T>
+```
+
+React, Vue, and Solid keep the `useStore` / `useStopwatch` names their ecosystems expect. Svelte uses `createStopwatch` and `toSvelteStore` because `svelte/store` already exports `fromStore` / `toStore` for the opposite conversion.
+
+### Rules for the instance-owning entry points
+
+- **Must not auto-start.** Construction is inert until `start()`.
+- **Teardown is mandatory.** `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
+- **Control identities are stable** for the life of the owner, so they are safe in dependency arrays and as event handlers.
+- Expose the owned instance as `stopwatch` for callers who need to pass it elsewhere.
+- The only option is `clock`. A `precision`-style option that coarsens notifications is out of scope for Wave 1 and will follow separately.
+
+### Packaging (Wave 1 adapters)
+
+- `@watchstop/core` is a **peer dependency**, not a regular dependency, plus a dev dependency so tests resolve it. Adapters import `Stopwatch` as a value, but the consumer must already own core to construct or share instances, and a regular dependency invites a second resolved copy whose `Store` type is not identical to the consumer's.
+- Framework packages stay peer dependencies as before.
 
 ### React (`@watchstop/react`) — Wave 1
 
@@ -120,21 +195,25 @@ Each adapter has exactly one export. React, Vue, and Solid keep the `useStore` n
 - **MUST NOT** pass live `store.get` / `stopwatch.get` as `getSnapshot`. Cache the value from `subscribe` (or a versioned snapshot updated only in the listener); `getSnapshot` returns that cached snapshot so it is stable between notifications.
 - Do not use `useState` + manual subscribe as the primary path.
 - SSR: initial / server snapshot may use one `get()`; must be safe without `window`.
+- `useStopwatch` creates the instance with a lazy `useRef` and destroys it in a `useEffect` cleanup — **not** `useMemo`, which React may discard. Strict Mode double-invoke must rebuild and republish the instance rather than leave a destroyed or orphaned stopwatch.
 
 ### Svelte (`@watchstop/svelte`) — Wave 1
 
 - Expose a readable-store shape (`subscribe` compatible with `$store` auto-subscription).
 - May wrap `Stopwatch` or implement the readable contract by delegating to `subscribe`/`get`.
 - `subscribe` must call the listener synchronously with `get()` before registering it, per Svelte's readable contract.
+- `createStopwatch` ties `destroy()` to `onDestroy`, **not** to last-unsubscribe: a store may be subscribed and unsubscribed repeatedly, and a stopwatch may legitimately run with zero subscribers. Outside component initialisation it registers no teardown and the caller owns `destroy()`.
 
 ### Vue (`@watchstop/vue`) — Wave 1
 
 - Composable returns a `ref` (or shallow ref) updated from `subscribe`, cleaned up with `onScopeDispose`.
 - Initial `ref` value from `get()`.
+- `useStopwatch` registers a second `onScopeDispose` for `destroy()`, after the unsubscribe.
 
 ### Solid (`@watchstop/solid`) — Wave 1
 
 - Create a signal from `get()`; update in `subscribe`; `onCleanup` unsubscribes.
+- `useStopwatch` registers a second `onCleanup` for `destroy()`, after the unsubscribe.
 
 ### Angular (`@watchstop/angular`) — Wave 2
 

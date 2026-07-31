@@ -3,17 +3,67 @@ title: Svelte
 description: "@watchstop/svelte adapter."
 ---
 
-Wave 1 adapter converting a `Store` into a Svelte readable store so `$` auto-subscription works.
+Wave 1 adapter exposing `Store` as a Svelte readable store so `$` auto-subscription works. `@watchstop/core` is a peer dependency — install both.
 
-## Exact public name
+## Exact public names
 
 ```ts
+type CreateStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchStore = Readable<number> & {
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchStore
 declare function toSvelteStore<T>(store: Store<T>): Readable<T>
 ```
 
-The name is `toSvelteStore`, not `fromStore`. `svelte/store` already exports `fromStore` / `toStore` for converting between Svelte stores and runes, and those convert in the opposite direction.
+The conversion helper is named `toSvelteStore`, not `fromStore`. `svelte/store` already exports `fromStore` / `toStore` for converting between Svelte stores and runes, and those convert in the opposite direction.
 
-## Usage
+## `createStopwatch` — the common case
+
+`createStopwatch` owns a `Stopwatch` and returns the Svelte custom-store shape: a `subscribe` for `$` auto-subscription plus callable controls on the same object.
+
+```svelte
+<script lang="ts">
+  import { createStopwatch } from '@watchstop/svelte'
+
+  const stopwatch = createStopwatch()
+</script>
+
+<p>{$stopwatch} ms</p>
+<button onclick={stopwatch.start}>Start</button>
+<button onclick={stopwatch.stop}>Stop</button>
+<button onclick={stopwatch.reset}>Reset</button>
+```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- The component `<script>` runs once, so `start`, `stop`, and `reset` are bound once and keep the same identity for the life of the component.
+- `subscribe` calls the listener synchronously with the current value before registering it, as Svelte's readable contract requires.
+- `stopwatch.stopwatch` is the owned instance, exposed for passing elsewhere.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+### Teardown is tied to the component, not to subscriber count
+
+`createStopwatch` registers `onDestroy`, so `destroy()` runs when the component that created the store is destroyed.
+
+It deliberately does **not** destroy on last-unsubscribe, which is what `svelte/store`'s `readable` start/stop notifier does. A Svelte store may be subscribed and unsubscribed many times during one component's life — `{#if}` blocks and conditional `{$stopwatch}` reads do exactly that — and a stopwatch is controlled imperatively, so it can legitimately be running with zero subscribers. Destroying at subscriber zero would silently kill a running stopwatch and leave a dead instance behind for the next subscriber. Component lifetime is the only boundary that matches who owns the instance.
+
+Calling `createStopwatch()` outside component initialisation — at module level, for a singleton — is allowed and simply registers no automatic teardown. Call `stopwatch.stopwatch.destroy()` yourself in that case.
+
+## `toSvelteStore` — advanced
+
+Use `toSvelteStore` when the component does not own the instance: a stopwatch passed in as a prop or through context, a module-level singleton, or any other `Store<T>`. You own `destroy()` in that case.
 
 ```svelte
 <script lang="ts">
@@ -34,8 +84,14 @@ The name is `toSvelteStore`, not `fromStore`. `svelte/store` already exports `fr
 
 ## Contract
 
-- `subscribe` calls the listener synchronously with `store.get()` before registering it, as Svelte's readable contract requires.
+- `subscribe` calls the listener synchronously with `store.get()` before registering it.
 - The returned unsubscribe function is `store.subscribe`'s own, so `$` auto-subscription cleanup unsubscribes from the underlying `Store`.
-- Controls stay on the `Stopwatch`; the readable store is value-only. Call `destroy()` on the stopwatch yourself.
+- `toSvelteStore` is value-only; controls stay on the `Stopwatch`.
+
+## Re-render cost
+
+`$stopwatch` is raw milliseconds delivered at the clock's tick cadence, so the markup reading it updates roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
+
+A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `$stopwatch` read in the smallest possible component.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).
