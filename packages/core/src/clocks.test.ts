@@ -120,6 +120,18 @@ describe('createTimerClock', () => {
     await vi.advanceTimersByTimeAsync(intervalMs * 5)
     expect(cancelledCallback).not.toHaveBeenCalled()
   })
+
+  test('ignores cancelling a handle it never issued', async () => {
+    vi.useFakeTimers()
+    const intervalMs = 10
+    const timerClock = createTimerClock({ intervalMs })
+    const scheduledCallback = vi.fn()
+    timerClock.schedule(scheduledCallback)
+    timerClock.cancel(Symbol('unknown'))
+    timerClock.cancel('not-a-handle')
+    await vi.advanceTimersByTimeAsync(intervalMs)
+    expect(scheduledCallback).toHaveBeenCalledOnce()
+  })
 })
 
 function stubAnimationFrames(): Map<number, FrameRequestCallback> {

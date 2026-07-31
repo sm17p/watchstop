@@ -32,6 +32,19 @@ describe('Stopwatch', () => {
     expect(stopwatch.get()).toBe(40)
   })
 
+  test('notifies subscribers with the final elapsed time on stop', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock)
+    const listener = vi.fn()
+    stopwatch.subscribe(listener)
+    stopwatch.start()
+    mockClock.advance(40)
+    listener.mockClear()
+    stopwatch.stop()
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(40)
+  })
+
   test('resumes from the accumulated total when started again', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)
@@ -105,6 +118,23 @@ describe('Stopwatch', () => {
     mockClock.advance(7)
     expect(firstListener).toHaveBeenCalledWith(7)
     expect(secondListener).toHaveBeenCalledWith(7)
+  })
+
+  test('ticks on the frame cadence of a clock with a frame delay', () => {
+    const frameDelay = 10
+    const mockClock = createMockClock({ frameDelay })
+    const stopwatch = new Stopwatch(mockClock)
+    const listener = vi.fn()
+    stopwatch.subscribe(listener)
+    stopwatch.start()
+    mockClock.advance(frameDelay - 1)
+    expect(listener).not.toHaveBeenCalled()
+    mockClock.advance(1)
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(frameDelay)
+    mockClock.advance(frameDelay)
+    expect(listener).toHaveBeenCalledTimes(2)
+    expect(listener).toHaveBeenLastCalledWith(frameDelay * 2)
   })
 
   test('keeps notifying the remaining listeners when one throws', () => {
