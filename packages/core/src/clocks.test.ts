@@ -44,6 +44,9 @@ describe('createMockClock', () => {
   test('rejects a negative or non-finite frame delay', () => {
     expect(() => createMockClock({ frameDelay: -1 })).toThrow(RangeError)
     expect(() => createMockClock({ frameDelay: Number.NaN })).toThrow(RangeError)
+    expect(() =>
+      createMockClock({ frameDelay: Number.POSITIVE_INFINITY }),
+    ).toThrow(RangeError)
   })
 
   test('defers a callback scheduled from inside a callback to the next advance', () => {
@@ -119,6 +122,24 @@ describe('createTimerClock', () => {
   })
 })
 
+function stubAnimationFrames(): Map<number, FrameRequestCallback> {
+  const pendingFrameCallbacks = new Map<number, FrameRequestCallback>()
+  let nextFrameId = 1
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    (callback: FrameRequestCallback): number => {
+      const frameId = nextFrameId
+      nextFrameId += 1
+      pendingFrameCallbacks.set(frameId, callback)
+      return frameId
+    },
+  )
+  vi.stubGlobal('cancelAnimationFrame', (frameId: number): void => {
+    pendingFrameCallbacks.delete(frameId)
+  })
+  return pendingFrameCallbacks
+}
+
 describe('createBrowserClock', () => {
   test('refuses to be created without requestAnimationFrame', () => {
     vi.stubGlobal('requestAnimationFrame', undefined)
@@ -126,27 +147,19 @@ describe('createBrowserClock', () => {
     expect(() => createBrowserClock()).toThrow()
   })
 
+  test('reports the current time as a number', () => {
+    stubAnimationFrames()
+    const browserClock = createBrowserClock()
+    expect(typeof browserClock.now()).toBe('number')
+  })
+
   test('defers callbacks to the next animation frame and drops cancelled ones', () => {
-    const pendingFrameCallbacks = new Map<number, FrameRequestCallback>()
-    let nextFrameId = 1
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      (callback: FrameRequestCallback): number => {
-        const frameId = nextFrameId
-        nextFrameId += 1
-        pendingFrameCallbacks.set(frameId, callback)
-        return frameId
-      },
-    )
-    vi.stubGlobal('cancelAnimationFrame', (frameId: number): void => {
-      pendingFrameCallbacks.delete(frameId)
-    })
+    const pendingFrameCallbacks = stubAnimationFrames()
 
     const browserClock = createBrowserClock()
     const scheduledCallback = vi.fn()
     const scheduleHandle = browserClock.schedule(scheduledCallback)
     expect(scheduledCallback).not.toHaveBeenCalled()
-    expect(typeof browserClock.now()).toBe('number')
     expect(typeof scheduleHandle).toBe('number')
     if (typeof scheduleHandle === 'number') {
       const queuedFrameCallback = pendingFrameCallbacks.get(scheduleHandle)
@@ -161,9 +174,11 @@ describe('createBrowserClock', () => {
     const cancelledHandle = browserClock.schedule(cancelledCallback)
     browserClock.cancel(cancelledHandle)
     browserClock.cancel(cancelledHandle)
+    expect(typeof cancelledHandle).toBe('number')
     if (typeof cancelledHandle === 'number') {
       expect(pendingFrameCallbacks.has(cancelledHandle)).toBe(false)
     }
+    expect(cancelledCallback).not.toHaveBeenCalled()
   })
 })
 
