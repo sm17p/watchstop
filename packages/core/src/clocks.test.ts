@@ -34,14 +34,6 @@ describe('createMockClock', () => {
     expect(scheduledCallback).toHaveBeenCalledOnce()
   })
 
-  test('runs scheduled callbacks on the very next advance by default', () => {
-    const mockClock = createMockClock()
-    const scheduledCallback = vi.fn()
-    mockClock.schedule(scheduledCallback)
-    mockClock.advance(0)
-    expect(scheduledCallback).toHaveBeenCalledOnce()
-  })
-
   test('rejects advancing by a negative or non-finite duration', () => {
     const mockClock = createMockClock()
     expect(() => mockClock.advance(Number.NaN)).toThrow(RangeError)
@@ -69,7 +61,7 @@ describe('createMockClock', () => {
     expect(callbackRunOrder).toEqual(['first', 'nested'])
   })
 
-  test('runs callbacks due at the same time in the order they were scheduled', () => {
+  test('runs callbacks due on the next advance, in scheduling order', () => {
     const mockClock = createMockClock()
     const callbackRunOrder: number[] = []
     mockClock.schedule(() => {

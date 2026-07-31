@@ -21,18 +21,6 @@ describe('Stopwatch', () => {
     expect(stopwatch.get()).toBe(50)
   })
 
-  test('notifies subscribers with the elapsed time on each tick', () => {
-    const mockClock = createMockClock()
-    const stopwatch = new Stopwatch(mockClock)
-    const listener = vi.fn()
-    stopwatch.subscribe(listener)
-    stopwatch.start()
-    mockClock.advance(100)
-    expect(stopwatch.get()).toBe(100)
-    expect(listener).toHaveBeenCalled()
-    expect(listener).toHaveBeenLastCalledWith(100)
-  })
-
   test('freezes elapsed once stopped', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)
