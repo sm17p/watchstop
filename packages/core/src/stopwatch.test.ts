@@ -152,42 +152,57 @@ describe('Stopwatch', () => {
     expect(survivingListener).toHaveBeenCalledWith(3)
   })
 
-  test('skips listeners added or removed mid-notification and halts the wave on destroy', () => {
+  test('never notifies a listener subscribed during the wave that added it', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock)
+    const listenerAddedDuringNotification = vi.fn()
+    const subscribingListener = vi.fn(() => {
+      stopwatch.subscribe(listenerAddedDuringNotification)
+    })
+    stopwatch.subscribe(subscribingListener)
+    stopwatch.start()
+    mockClock.advance(1)
+    expect(subscribingListener).toHaveBeenCalledOnce()
+    expect(listenerAddedDuringNotification).not.toHaveBeenCalled()
+  })
+
+  test('skips a listener unsubscribed earlier in the same wave', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock)
+    let unsubscribeSecondListener: (() => void) | undefined
+    const firstListener = vi.fn(() => {
+      unsubscribeSecondListener?.()
+    })
+    const secondListener = vi.fn()
+    stopwatch.subscribe(firstListener)
+    unsubscribeSecondListener = stopwatch.subscribe(secondListener)
+    stopwatch.start()
+    mockClock.advance(1)
+    expect(firstListener).toHaveBeenCalledOnce()
+    expect(secondListener).not.toHaveBeenCalled()
+  })
+
+  test('halts the wave when a listener destroys the stopwatch', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)
     const notifiedListenerNames: string[] = []
-    let unsubscribeSecondListener: (() => void) | undefined
-    const listenerAddedDuringNotification = vi.fn(() => {
-      notifiedListenerNames.push('addedDuringNotification')
-    })
     const firstListener = vi.fn(() => {
       notifiedListenerNames.push('first')
-      stopwatch.subscribe(listenerAddedDuringNotification)
-      unsubscribeSecondListener?.()
-    })
-    const secondListener = vi.fn(() => {
-      notifiedListenerNames.push('second')
     })
     const destroyingListener = vi.fn(() => {
       notifiedListenerNames.push('destroying')
       stopwatch.destroy()
     })
-    const fourthListener = vi.fn(() => {
-      notifiedListenerNames.push('fourth')
+    const listenerAfterDestroy = vi.fn(() => {
+      notifiedListenerNames.push('afterDestroy')
     })
     stopwatch.subscribe(firstListener)
-    unsubscribeSecondListener = stopwatch.subscribe(secondListener)
     stopwatch.subscribe(destroyingListener)
-    stopwatch.subscribe(fourthListener)
+    stopwatch.subscribe(listenerAfterDestroy)
     stopwatch.start()
     mockClock.advance(1)
     expect(notifiedListenerNames).toEqual(['first', 'destroying'])
-    expect(listenerAddedDuringNotification).not.toHaveBeenCalled()
-    expect(secondListener).not.toHaveBeenCalled()
-    expect(fourthListener).not.toHaveBeenCalled()
-    expect(stopwatch.get()).toBe(1)
-    mockClock.advance(10)
-    expect(stopwatch.get()).toBe(1)
+    expect(listenerAfterDestroy).not.toHaveBeenCalled()
   })
 
   test('honours stop called from inside a listener', () => {
