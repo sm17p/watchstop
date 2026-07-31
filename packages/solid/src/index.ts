@@ -1,4 +1,3 @@
-export { useStore } from './use-store.js'
 export {
   useStopwatch,
   type StopwatchBinding,

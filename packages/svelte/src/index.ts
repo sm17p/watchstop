@@ -1,4 +1,3 @@
-export { toSvelteStore } from './to-svelte-store.js'
 export {
   createStopwatch,
   type CreateStopwatchOptions,

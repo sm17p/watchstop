@@ -68,6 +68,10 @@ describe('createStopwatch', () => {
     expect(received).toEqual([0, 16, 16, 0])
 
     unsubscribe()
+    stopwatch.start()
+    clock.advance(16)
+    expect(received).toEqual([0, 16, 16, 0])
+
     stopwatch.stopwatch.destroy()
   })
 

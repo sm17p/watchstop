@@ -71,6 +71,36 @@ describe('useStopwatch', () => {
     expect(result.current.elapsed).toBe(0)
   })
 
+  it('renders the elapsed delivered by subscribe, not live elapsed', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const renderedElapsed: number[] = []
+    const { result, rerender } = renderHook(() => {
+      const binding = useStopwatch({ clock })
+      renderedElapsed.push(binding.elapsed)
+      return binding
+    })
+
+    act(() => {
+      result.current.start()
+    })
+    act(() => {
+      clock.advance(16)
+    })
+    expect(renderedElapsed.at(-1)).toBe(16)
+
+    clock.advance(8)
+    expect(result.current.stopwatch.get()).toBe(24)
+
+    const rendersBeforeRerender = renderedElapsed.length
+    rerender()
+    expect(renderedElapsed[rendersBeforeRerender]).toBe(16)
+
+    act(() => {
+      clock.advance(8)
+    })
+    expect(result.current.elapsed).toBe(32)
+  })
+
   it('keeps control identities stable across renders and ticks', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const { result, rerender } = renderHook(() => useStopwatch({ clock }))
