@@ -3,4 +3,81 @@ title: Angular
 description: "@watchstop/angular adapter."
 ---
 
-Docs after core ships. Wave 2 signals/`DestroyRef` bridge.
+Wave 2 adapter bridging `Store` into an Angular signal, cleaned up with `DestroyRef`. `@watchstop/core` is a peer dependency — install both.
+
+## Exact public names
+
+`injectStopwatch` is the entire public API.
+
+```ts
+type InjectStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchBinding = {
+  elapsed: Signal<number>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBinding
+```
+
+## `injectStopwatch`
+
+`injectStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself. It must run in an [injection context](https://angular.dev/guide/di/dependency-injection-context) (`constructor`, field initializer, factory, or `runInInjectionContext`).
+
+```ts
+import { Component } from '@angular/core'
+import { injectStopwatch } from '@watchstop/angular'
+
+@Component({
+  selector: 'app-timer',
+  template: `
+    <p>{{ elapsed() }} ms</p>
+    <button (click)="start()">Start</button>
+    <button (click)="stop()">Stop</button>
+    <button (click)="reset()">Reset</button>
+  `,
+})
+export class Timer {
+  readonly binding = injectStopwatch()
+  readonly elapsed = this.binding.elapsed
+  readonly start = this.binding.start
+  readonly stop = this.binding.stop
+  readonly reset = this.binding.reset
+}
+```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- `start`, `stop`, and `reset` keep the same identity for the life of the owner.
+- `DestroyRef.onDestroy` calls `destroy()` when the injecting component, directive, or injector is destroyed, after the unsubscribe registered for the signal.
+- `elapsed` is a readonly `Signal<number>`. `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+## Sharing one stopwatch across components
+
+Not supported in v1. Each `injectStopwatch()` call constructs and owns its own instance, so two injectors calling it get two unrelated stopwatches, and there is no supported way to bind to a stopwatch passed through props, DI providers, or a module-level singleton.
+
+`Stopwatch` is the only `Store` in core today, so a generic primitive for instances the injector does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, subscribe to the shared instance directly with `Stopwatch.subscribe` and write into your own signal.
+
+## Contract
+
+- The signal starts at `store.get()` and is written only from `subscribe`.
+- `DestroyRef` unsubscribes and destroys when the owning injection context is destroyed.
+- The returned signal is read-only; controls stay on the `Stopwatch`.
+
+## Re-render cost
+
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
+
+A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `elapsed` read in the smallest possible component.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).
