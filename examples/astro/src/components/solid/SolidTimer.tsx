@@ -4,7 +4,7 @@ export default function SolidTimer() {
   const { elapsed, start, stop, reset } = useStopwatch()
 
   return (
-    <>
+    <div class="island-face">
       <p class="label">solid</p>
       <p class="elapsed">{Math.floor(elapsed())} ms</p>
       <div class="controls">
@@ -18,6 +18,6 @@ export default function SolidTimer() {
           Reset
         </button>
       </div>
-    </>
+    </div>
   )
 }

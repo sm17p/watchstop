@@ -8,13 +8,15 @@ import SolidTimer from '../components/solid/SolidTimer'
 import AlpineTimer from '../components/alpine/AlpineTimer.astro'
 import { AngularTimer } from '../components/angular/angular-timer'
 import QwikTimerIsland from '../components/qwik/QwikTimerIsland.astro'
+import IslandFallback from '../components/IslandFallback.astro'
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>watchstop examples</title>
+    <meta name="description" content="watchstop multi-framework playground" />
+    <title>watchstop · playground</title>
   </head>
   <body>
     <main class="page">
@@ -32,22 +34,32 @@ import QwikTimerIsland from '../components/qwik/QwikTimerIsland.astro'
           <CoreTimer />
         </article>
         <article class="island">
-          <ReactTimer client:only="react" />
+          <ReactTimer client:only="react">
+            <IslandFallback slot="fallback" label="react" />
+          </ReactTimer>
         </article>
         <article class="island">
-          <VueTimer client:only="vue" />
+          <VueTimer client:only="vue">
+            <IslandFallback slot="fallback" label="vue" />
+          </VueTimer>
         </article>
         <article class="island">
-          <SvelteTimer client:only="svelte" />
+          <SvelteTimer client:only="svelte">
+            <IslandFallback slot="fallback" label="svelte" />
+          </SvelteTimer>
         </article>
         <article class="island">
-          <SolidTimer client:only="solid-js" />
+          <SolidTimer client:only="solid-js">
+            <IslandFallback slot="fallback" label="solid" />
+          </SolidTimer>
         </article>
         <article class="island">
           <AlpineTimer />
         </article>
         <article class="island">
-          <AngularTimer client:only="@analogjs/astro-angular" />
+          <AngularTimer client:only="@analogjs/astro-angular">
+            <IslandFallback slot="fallback" label="angular" />
+          </AngularTimer>
         </article>
         <article class="island">
           <QwikTimerIsland />

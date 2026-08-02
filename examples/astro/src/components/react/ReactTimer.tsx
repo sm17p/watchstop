@@ -4,7 +4,7 @@ export default function ReactTimer() {
   const { elapsed, start, stop, reset } = useStopwatch()
 
   return (
-    <>
+    <div className="island-face">
       <p className="label">react</p>
       <p className="elapsed">{Math.floor(elapsed)} ms</p>
       <div className="controls">
@@ -18,6 +18,6 @@ export default function ReactTimer() {
           Reset
         </button>
       </div>
-    </>
+    </div>
   )
 }
