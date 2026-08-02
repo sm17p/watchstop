@@ -1,5 +1,16 @@
 # @watchstop/alpine
 
+## 1.1.0
+
+### Minor Changes
+
+- f305908: Expose reactive running on each adapter binding, synced from Stopwatch.running.
+
+### Patch Changes
+
+- Updated dependencies [f305908]
+  - @watchstop/core@0.2.0
+
 ## 1.0.2
 
 ### Patch Changes
