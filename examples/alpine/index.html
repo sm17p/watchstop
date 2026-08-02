@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watchstop · alpine</title>
+  </head>
+  <body>
+    <div class="timer" x-data="timer">
+      <p class="brand">alpine</p>
+      <p class="elapsed" x-text="Math.floor(elapsed) + ' ms'"></p>
+      <div class="controls">
+        <button type="button" @click="toggleRun()" x-text="running ? 'Stop' : 'Start'"></button>
+        <button type="button" @click="resetIdle()">Reset</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

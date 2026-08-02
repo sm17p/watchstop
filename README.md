@@ -14,6 +14,18 @@ mise run docs:dev
 
 See [AGENTS.md](./AGENTS.md) for agent implementation rules. Core docs under `/docs` are the source of truth.
 
+## Examples
+
+Private smoke-test apps live under [`examples/`](./examples) (workspace-linked, never published). Build packages first, then run the Astro playground or an individual app:
+
+```sh
+mise run build
+mise run examples:dev
+# or: pnpm --filter @watchstop/example-react dev
+```
+
+See [`examples/README.md`](./examples/README.md) for both tracks.
+
 ## Versioning and release
 
 Public `@watchstop/*` packages use [Changesets](https://github.com/changesets/changesets) (independent versions; `@watchstop/docs` is ignored and never published).

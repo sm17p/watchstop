@@ -81,3 +81,15 @@ run = "changeset pre exit"
 [tasks.zizmor]
 description = "Audit GitHub Actions workflows with zizmor"
 run = "zizmor .github/workflows"
+
+[tasks."examples:dev"]
+description = "Start the Astro multi-framework examples playground"
+run = "pnpm --filter @watchstop/examples-astro dev"
+
+[tasks."examples:build"]
+description = "Build Astro playground and all individual example apps"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+pnpm --filter "@watchstop/example-*" --filter @watchstop/examples-astro -r run build
+"""

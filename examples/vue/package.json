@@ -1,0 +1,21 @@
+{
+  "name": "@watchstop/example-vue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@watchstop/core": "workspace:*",
+    "@watchstop/vue": "workspace:*",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0",
+    "vue-tsc": "^3.0.0"
+  }
+}
