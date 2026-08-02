@@ -61,5 +61,18 @@ description = "Apply changesets and bump package versions"
 run = "changeset version"
 
 [tasks.release]
-description = "Publish packages to npm via changesets"
-run = "changeset publish"
+description = "Build then publish packages to npm via changesets"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+mise run build
+changeset publish
+"""
+
+[tasks."pre:enter"]
+description = "Enter Changesets pre mode for the rc channel"
+run = "changeset pre enter rc"
+
+[tasks."pre:exit"]
+description = "Exit Changesets pre mode"
+run = "changeset pre exit"
