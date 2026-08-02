@@ -20,6 +20,7 @@ type UseStopwatchOptions = {
 
 type StopwatchBinding = {
   elapsed: Signal<number>
+  running: Signal<boolean>
   start: QRL<() => void>
   stop: QRL<() => void>
   reset: QRL<() => void>
@@ -38,13 +39,14 @@ import { component$ } from '@qwik.dev/core'
 import { useStopwatch } from '@watchstop/qwik'
 
 export const Timer = component$(() => {
-  const { elapsed, start, stop, reset } = useStopwatch()
+  const { elapsed, running, start, stop, reset } = useStopwatch()
 
   return (
     <>
       <p>{elapsed.value} ms</p>
-      <button onClick$={start}>Start</button>
-      <button onClick$={stop}>Stop</button>
+      <button onClick$={running.value ? stop : start}>
+        {running.value ? 'Stop' : 'Start'}
+      </button>
       <button onClick$={reset}>Reset</button>
     </>
   )

@@ -7,6 +7,7 @@ export type CreateStopwatchOptions = {
 
 export type StopwatchBinding = {
   elapsed: number
+  running: boolean
   start: () => void
   stop: () => void
   reset: () => void
@@ -23,6 +24,7 @@ export function createStopwatch(
 
   const binding: StopwatchBinding = {
     elapsed: stopwatch.get(),
+    running: stopwatch.running,
     start: (): void => {
       stopwatch.start()
     },
@@ -37,6 +39,7 @@ export function createStopwatch(
       unsubscribe()
       unsubscribe = stopwatch.subscribe((value) => {
         this.elapsed = value
+        this.running = stopwatch.running
       })
     },
     destroy(): void {

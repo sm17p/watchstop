@@ -9,6 +9,7 @@ export type UseStopwatchOptions = {
 
 export type StopwatchBinding = {
   elapsed: number
+  running: boolean
   start: () => void
   stop: () => void
   reset: () => void
@@ -22,6 +23,7 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   const ownedStopwatch = useRef<Stopwatch | null>(null)
   const stopwatch = (ownedStopwatch.current ??= new Stopwatch(clock))
   const [, republishStopwatch] = useState(0)
+  const [running, setRunning] = useState(stopwatch.running)
 
   const controls = useRef<StopwatchControls | null>(null)
   const { start, stop, reset } = (controls.current ??= {
@@ -47,7 +49,14 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     }
   }, [clock])
 
+  useEffect(() => {
+    setRunning(stopwatch.running)
+    return stopwatch.subscribe(() => {
+      setRunning(stopwatch.running)
+    })
+  }, [stopwatch])
+
   const elapsed = useStore(stopwatch)
 
-  return { elapsed, start, stop, reset, stopwatch }
+  return { elapsed, running, start, stop, reset, stopwatch }
 }

@@ -16,6 +16,7 @@ type UseStopwatchOptions = {
 
 type StopwatchBinding = {
   elapsed: Readonly<ShallowRef<number>>
+  running: Readonly<ShallowRef<boolean>>
   start: () => void
   stop: () => void
   reset: () => void
@@ -33,13 +34,12 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 <script setup lang="ts">
 import { useStopwatch } from '@watchstop/vue'
 
-const { elapsed, start, stop, reset } = useStopwatch()
+const { elapsed, running, start, stop, reset } = useStopwatch()
 </script>
 
 <template>
   <p>{{ elapsed }} ms</p>
-  <button @click="start">Start</button>
-  <button @click="stop">Stop</button>
+  <button @click="running ? stop() : start()">{{ running ? 'Stop' : 'Start' }}</button>
   <button @click="reset">Reset</button>
 </template>
 ```

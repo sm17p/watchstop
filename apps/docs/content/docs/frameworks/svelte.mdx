@@ -15,6 +15,7 @@ type CreateStopwatchOptions = {
 }
 
 type StopwatchStore = Readable<number> & {
+  running: Readable<boolean>
   start: () => void
   stop: () => void
   reset: () => void
@@ -35,11 +36,13 @@ It is named `createStopwatch`, not `fromStore` or `toStore`. `svelte/store` alre
   import { createStopwatch } from '@watchstop/svelte'
 
   const stopwatch = createStopwatch()
+  const running = stopwatch.running
 </script>
 
 <p>{$stopwatch} ms</p>
-<button onclick={stopwatch.start}>Start</button>
-<button onclick={stopwatch.stop}>Stop</button>
+<button onclick={$running ? stopwatch.stop : stopwatch.start}>
+  {$running ? 'Stop' : 'Start'}
+</button>
 <button onclick={stopwatch.reset}>Reset</button>
 ```
 

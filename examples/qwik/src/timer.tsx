@@ -1,9 +1,8 @@
-import { component$, useSignal } from '@qwik.dev/core'
+import { component$ } from '@qwik.dev/core'
 import { useStopwatch } from '@watchstop/qwik'
 
 export const Timer = component$(() => {
-  const { elapsed, stopwatch } = useStopwatch()
-  const running = useSignal(false)
+  const { elapsed, running, stopwatch } = useStopwatch()
 
   return (
     <div class="timer">
@@ -15,11 +14,9 @@ export const Timer = component$(() => {
           onClick$={() => {
             if (running.value) {
               stopwatch.stop()
-              running.value = false
               return
             }
             stopwatch.start()
-            running.value = true
           }}
         >
           {running.value ? 'Stop' : 'Start'}
@@ -28,7 +25,6 @@ export const Timer = component$(() => {
           type="button"
           onClick$={() => {
             stopwatch.reset()
-            running.value = false
           }}
         >
           Reset

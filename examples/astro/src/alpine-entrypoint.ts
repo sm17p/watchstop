@@ -6,19 +6,12 @@ export default (Alpine: Alpine) => {
     const binding = createStopwatch()
     return {
       ...binding,
-      running: false,
       toggleRun() {
         if (this.running) {
           this.stop()
-          this.running = false
           return
         }
         this.start()
-        this.running = true
-      },
-      resetIdle() {
-        this.reset()
-        this.running = false
       },
     }
   })

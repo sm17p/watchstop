@@ -17,6 +17,10 @@ export class Stopwatch implements Store<number> {
     this.#clock = clock ?? detectClock()
   }
 
+  get running(): boolean {
+    return this.#running
+  }
+
   start(): void {
     if (this.#destroyed || this.#running) {
       return
@@ -24,6 +28,7 @@ export class Stopwatch implements Store<number> {
     this.#running = true
     this.#startTime = this.#clock.now()
     this.#scheduleTick()
+    this.#notifyListeners()
   }
 
   stop(): void {

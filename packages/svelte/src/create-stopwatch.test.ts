@@ -65,13 +65,31 @@ describe('createStopwatch', () => {
     clock.advance(32)
     stopwatch.reset()
 
-    expect(received).toEqual([0, 16, 16, 0])
+    expect(received).toEqual([0, 0, 16, 16, 0])
 
     unsubscribe()
     stopwatch.start()
     clock.advance(16)
-    expect(received).toEqual([0, 16, 16, 0])
+    expect(received).toEqual([0, 0, 16, 16, 0])
 
+    stopwatch.stopwatch.destroy()
+  })
+
+  it('exposes a running store that tracks start and stop', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const stopwatch = createStopwatch({ clock })
+    const runningStates: boolean[] = []
+    const unsubscribe = stopwatch.running.subscribe((value) => {
+      runningStates.push(value)
+    })
+
+    expect(runningStates).toEqual([false])
+    stopwatch.start()
+    expect(runningStates).toEqual([false, true])
+    stopwatch.stop()
+    expect(runningStates).toEqual([false, true, false])
+
+    unsubscribe()
     stopwatch.stopwatch.destroy()
   })
 
@@ -90,7 +108,7 @@ describe('createStopwatch', () => {
     stopwatch.start()
     clock.advance(16)
 
-    expect(received).toEqual([0, 16])
+    expect(received).toEqual([0, 0, 16])
     expect(stopwatch.start).toBe(start)
     expect(stopwatch.stop).toBe(stop)
     expect(stopwatch.reset).toBe(reset)

@@ -52,6 +52,7 @@ describe('useStopwatch', () => {
     act(() => {
       result.current.start()
     })
+    expect(result.current.running).toBe(true)
     act(() => {
       clock.advance(16)
     })
@@ -60,6 +61,7 @@ describe('useStopwatch', () => {
     act(() => {
       result.current.stop()
     })
+    expect(result.current.running).toBe(false)
     act(() => {
       clock.advance(32)
     })
@@ -68,6 +70,19 @@ describe('useStopwatch', () => {
     act(() => {
       result.current.reset()
     })
+    expect(result.current.elapsed).toBe(0)
+    expect(result.current.running).toBe(false)
+  })
+
+  it('reflects running after start notifies at zero elapsed', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const { result } = renderHook(() => useStopwatch({ clock }))
+
+    expect(result.current.running).toBe(false)
+    act(() => {
+      result.current.start()
+    })
+    expect(result.current.running).toBe(true)
     expect(result.current.elapsed).toBe(0)
   })
 
