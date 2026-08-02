@@ -13,6 +13,8 @@ const cleanups: Array<() => void> = []
 
 vi.mock('@qwik.dev/core', () => ({
   useSignal: <T,>(initial: T): MockSignal<T> => ({ value: initial }),
+  noSerialize: <T,>(value: T): T => value,
+  $: <T,>(value: T): T => value,
   useVisibleTask$: (task: (context: VisibleTaskContext) => void): void => {
     task({
       cleanup: (callback: () => void): void => {
