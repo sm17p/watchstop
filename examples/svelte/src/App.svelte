@@ -5,7 +5,7 @@
   const running = stopwatch.running
 
   const toggleRun = () => {
-    if (stopwatch.stopwatch.running) {
+    if ($running) {
       stopwatch.stop()
       return
     }
