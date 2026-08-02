@@ -8,6 +8,7 @@
     { "path": "./packages/vue" },
     { "path": "./packages/solid" },
     { "path": "./packages/angular" },
-    { "path": "./packages/qwik" }
+    { "path": "./packages/qwik" },
+    { "path": "./packages/alpine" }
   ]
 }

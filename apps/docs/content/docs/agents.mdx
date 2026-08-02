@@ -259,8 +259,26 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 
 ### Alpine (`@watchstop/alpine`) — Wave 2
 
-- Imperative `subscribe` inside `Alpine.data` / magic / plugin helper.
-- Unsubscribe on Alpine `destroy` / element removal.
+```ts
+type CreateStopwatchOptions = { clock?: Clock }
+
+type StopwatchBinding = {
+  elapsed: number
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+  init: (this: StopwatchBinding) => void
+  destroy: () => void
+}
+
+declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBinding
+```
+
+- Alpine has no hook/inject context, so the entry point is a factory (same rationale as Svelte).
+- No plugin / `Alpine.data` registration helper — one entry point only; callers may wrap `createStopwatch()` in their own `Alpine.data` if they want a name.
+- `init` performs imperative `subscribe` (writes `elapsed` through `this` for Alpine reactivity).
+- `destroy` unsubscribes and destroys; Alpine invokes it on element removal.
 - Implication for core: destroy/unsubscribe paths must be idempotent (already required).
 
 ### Docs-only (no package in v1)

@@ -3,4 +3,79 @@ title: Alpine
 description: "@watchstop/alpine adapter."
 ---
 
-Docs after core ships. Wave 2 `Alpine.data` / plugin helper.
+Wave 2 adapter. Alpine has no hook or inject context, so the entry point is a **factory** — the same rationale as Svelte's `createStopwatch`. A plugin / `Alpine.data` registration helper was considered and rejected so the package stays a single entry point. `@watchstop/core` is a peer dependency — install both.
+
+## Exact public names
+
+`createStopwatch` is the entire public API.
+
+```ts
+type CreateStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchBinding = {
+  elapsed: number
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+  init: (this: StopwatchBinding) => void
+  destroy: () => void
+}
+
+declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBinding
+```
+
+## `createStopwatch`
+
+`createStopwatch` owns a `Stopwatch` and returns a binding you can hand to Alpine as `x-data` (or return from your own `Alpine.data` factory). Alpine calls `init` / `destroy` on component data automatically; that is how subscribe and teardown attach.
+
+```html
+<div x-data="createStopwatch()">
+  <p x-text="elapsed + ' ms'"></p>
+  <button @click="start()">Start</button>
+  <button @click="stop()">Stop</button>
+  <button @click="reset()">Reset</button>
+</div>
+```
+
+```js
+import Alpine from 'alpinejs'
+import { createStopwatch } from '@watchstop/alpine'
+
+window.createStopwatch = createStopwatch
+Alpine.start()
+```
+
+Or register a named data factory yourself (still the same package entry point):
+
+```js
+Alpine.data('timer', () => createStopwatch())
+```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- `init` subscribes and writes `elapsed` through `this` so Alpine's reactive proxy sees updates.
+- `destroy` unsubscribes and calls `stopwatch.destroy()`. When Alpine removes the component it invokes `destroy` for you. Outside Alpine, call `destroy()` yourself (same ownership story as Svelte outside component init).
+- `start`, `stop`, and `reset` keep the same identity for the life of the binding.
+- `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself when Alpine (or you) already owns teardown via `binding.destroy()`.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+## Sharing one stopwatch across components
+
+Not supported in v1. Each `createStopwatch()` call constructs and owns its own instance. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6).
+
+## Why a factory (not a hook)
+
+React, Vue, Solid, and Qwik have hook or composable context. Angular has `inject`. Alpine does not — there is nowhere for a library to hang ownership without the caller participating. The factory returns `{ elapsed, start, stop, reset, stopwatch }` plus Alpine's usual `init` / `destroy` hooks so one object is both the binding and the lifecycle owner.
+
+## Re-render cost
+
+`elapsed` is raw milliseconds delivered at the clock's tick cadence. Keep the `x-text` / binding read in the smallest possible element.
+
+See [Store](/docs/core/store), [Architecture](/docs/architecture), and [Agents](/docs/agents).
