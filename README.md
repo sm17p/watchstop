@@ -1,6 +1,38 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Watchstop" width="120" height="120" />
+</p>
+
 # watchstop
 
 Runtime-agnostic stopwatch core and thin framework adapters.
+
+**[Docs](https://watchstop.sm17p.me)** · **[npm](https://www.npmjs.com/org/watchstop)** · **[GitHub](https://github.com/sm17p/watchstop)**
+
+[![CI](https://github.com/sm17p/watchstop/actions/workflows/ci.yml/badge.svg)](https://github.com/sm17p/watchstop/actions/workflows/ci.yml)
+[![Release](https://github.com/sm17p/watchstop/actions/workflows/release.yml/badge.svg)](https://github.com/sm17p/watchstop/actions/workflows/release.yml)
+[![Deploy docs](https://github.com/sm17p/watchstop/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/sm17p/watchstop/actions/workflows/deploy-docs.yml)
+[![License](https://img.shields.io/github/license/sm17p/watchstop?style=flat-square)](./LICENSE)
+[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fwatchstop.sm17p.me&label=docs&style=flat-square)](https://watchstop.sm17p.me)
+
+Primary package:
+
+[![npm](https://img.shields.io/npm/v/@watchstop/core?style=flat-square)](https://www.npmjs.com/package/@watchstop/core)
+[![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/core?style=flat-square&label=minzip)](https://bundlephobia.com/package/@watchstop/core)
+
+## Packages
+
+| Package | Version | Bundle | Install | Downloads | Types |
+| --- | --- | --- | --- | --- | --- |
+| [`@watchstop/core`](https://www.npmjs.com/package/@watchstop/core) | [![npm](https://img.shields.io/npm/v/@watchstop/core?style=flat-square)](https://www.npmjs.com/package/@watchstop/core) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/core?style=flat-square)](https://bundlephobia.com/package/@watchstop/core) | [![install](https://badgen.net/packagephobia/install/@watchstop/core)](https://packagephobia.com/result?p=%40watchstop%2Fcore) | [![downloads](https://img.shields.io/npm/dm/@watchstop/core?style=flat-square)](https://www.npmjs.com/package/@watchstop/core) | [![types](https://img.shields.io/npm/types/@watchstop/core?style=flat-square)](https://www.npmjs.com/package/@watchstop/core) |
+| [`@watchstop/react`](https://www.npmjs.com/package/@watchstop/react) | [![npm](https://img.shields.io/npm/v/@watchstop/react?style=flat-square)](https://www.npmjs.com/package/@watchstop/react) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/react?style=flat-square)](https://bundlephobia.com/package/@watchstop/react) | [![install](https://badgen.net/packagephobia/install/@watchstop/react)](https://packagephobia.com/result?p=%40watchstop%2Freact) | [![downloads](https://img.shields.io/npm/dm/@watchstop/react?style=flat-square)](https://www.npmjs.com/package/@watchstop/react) | [![types](https://img.shields.io/npm/types/@watchstop/react?style=flat-square)](https://www.npmjs.com/package/@watchstop/react) |
+| [`@watchstop/svelte`](https://www.npmjs.com/package/@watchstop/svelte) | [![npm](https://img.shields.io/npm/v/@watchstop/svelte?style=flat-square)](https://www.npmjs.com/package/@watchstop/svelte) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/svelte?style=flat-square)](https://bundlephobia.com/package/@watchstop/svelte) | [![install](https://badgen.net/packagephobia/install/@watchstop/svelte)](https://packagephobia.com/result?p=%40watchstop%2Fsvelte) | [![downloads](https://img.shields.io/npm/dm/@watchstop/svelte?style=flat-square)](https://www.npmjs.com/package/@watchstop/svelte) | [![types](https://img.shields.io/npm/types/@watchstop/svelte?style=flat-square)](https://www.npmjs.com/package/@watchstop/svelte) |
+| [`@watchstop/vue`](https://www.npmjs.com/package/@watchstop/vue) | [![npm](https://img.shields.io/npm/v/@watchstop/vue?style=flat-square)](https://www.npmjs.com/package/@watchstop/vue) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/vue?style=flat-square)](https://bundlephobia.com/package/@watchstop/vue) | [![install](https://badgen.net/packagephobia/install/@watchstop/vue)](https://packagephobia.com/result?p=%40watchstop%2Fvue) | [![downloads](https://img.shields.io/npm/dm/@watchstop/vue?style=flat-square)](https://www.npmjs.com/package/@watchstop/vue) | [![types](https://img.shields.io/npm/types/@watchstop/vue?style=flat-square)](https://www.npmjs.com/package/@watchstop/vue) |
+| [`@watchstop/solid`](https://www.npmjs.com/package/@watchstop/solid) | [![npm](https://img.shields.io/npm/v/@watchstop/solid?style=flat-square)](https://www.npmjs.com/package/@watchstop/solid) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/solid?style=flat-square)](https://bundlephobia.com/package/@watchstop/solid) | [![install](https://badgen.net/packagephobia/install/@watchstop/solid)](https://packagephobia.com/result?p=%40watchstop%2Fsolid) | [![downloads](https://img.shields.io/npm/dm/@watchstop/solid?style=flat-square)](https://www.npmjs.com/package/@watchstop/solid) | [![types](https://img.shields.io/npm/types/@watchstop/solid?style=flat-square)](https://www.npmjs.com/package/@watchstop/solid) |
+| [`@watchstop/angular`](https://www.npmjs.com/package/@watchstop/angular) | [![npm](https://img.shields.io/npm/v/@watchstop/angular?style=flat-square)](https://www.npmjs.com/package/@watchstop/angular) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/angular?style=flat-square)](https://bundlephobia.com/package/@watchstop/angular) | [![install](https://badgen.net/packagephobia/install/@watchstop/angular)](https://packagephobia.com/result?p=%40watchstop%2Fangular) | [![downloads](https://img.shields.io/npm/dm/@watchstop/angular?style=flat-square)](https://www.npmjs.com/package/@watchstop/angular) | [![types](https://img.shields.io/npm/types/@watchstop/angular?style=flat-square)](https://www.npmjs.com/package/@watchstop/angular) |
+| [`@watchstop/qwik`](https://www.npmjs.com/package/@watchstop/qwik) | [![npm](https://img.shields.io/npm/v/@watchstop/qwik?style=flat-square)](https://www.npmjs.com/package/@watchstop/qwik) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/qwik?style=flat-square)](https://bundlephobia.com/package/@watchstop/qwik) | [![install](https://badgen.net/packagephobia/install/@watchstop/qwik)](https://packagephobia.com/result?p=%40watchstop%2Fqwik) | [![downloads](https://img.shields.io/npm/dm/@watchstop/qwik?style=flat-square)](https://www.npmjs.com/package/@watchstop/qwik) | [![types](https://img.shields.io/npm/types/@watchstop/qwik?style=flat-square)](https://www.npmjs.com/package/@watchstop/qwik) |
+| [`@watchstop/alpine`](https://www.npmjs.com/package/@watchstop/alpine) | [![npm](https://img.shields.io/npm/v/@watchstop/alpine?style=flat-square)](https://www.npmjs.com/package/@watchstop/alpine) | [![bundle](https://img.shields.io/bundlephobia/minzip/@watchstop/alpine?style=flat-square)](https://bundlephobia.com/package/@watchstop/alpine) | [![install](https://badgen.net/packagephobia/install/@watchstop/alpine)](https://packagephobia.com/result?p=%40watchstop%2Falpine) | [![downloads](https://img.shields.io/npm/dm/@watchstop/alpine?style=flat-square)](https://www.npmjs.com/package/@watchstop/alpine) | [![types](https://img.shields.io/npm/types/@watchstop/alpine?style=flat-square)](https://www.npmjs.com/package/@watchstop/alpine) |
+
+## Local docs
 
 Tooling is orchestrated with [mise](https://mise.jdx.dev) (`mise.toml`). Prefer `mise run <task>`; root `pnpm` scripts are thin wrappers around the same tasks. CI (`.github/workflows/ci.yml`) runs `mise run build`, `test`, `typecheck`, and `docs` on push/PR to `main`.
 
