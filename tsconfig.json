@@ -7,6 +7,7 @@
     { "path": "./packages/svelte" },
     { "path": "./packages/vue" },
     { "path": "./packages/solid" },
-    { "path": "./packages/angular" }
+    { "path": "./packages/angular" },
+    { "path": "./packages/qwik" }
   ]
 }

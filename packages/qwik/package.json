@@ -1,0 +1,35 @@
+{
+  "name": "@watchstop/qwik",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@qwik.dev/core": "^2.0.0-beta.0",
+    "@watchstop/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@qwik.dev/core": "2.0.0-beta.38",
+    "@watchstop/core": "workspace:^"
+  }
+}
