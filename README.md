@@ -41,10 +41,12 @@ Do **not** run `changeset publish`, `pnpm release`, or `mise run release` from r
 
 ### Version Packages PR
 
-On push to `main` (or manual **Run workflow**), [`.github/workflows/release.yml`](./.github/workflows/release.yml) uses the Changesets [Trusted Publishing](https://changesets.dev/guide/automating) split jobs (`select-mode` → `version` or `pack` → `publish`):
+On push to `main` (or manual **Run workflow**), [`.github/workflows/release.yml`](./.github/workflows/release.yml) uses the Changesets [Trusted Publishing](https://changesets.dev/guide/automating) split jobs (`select-mode` → `version` or `osv-scan` → `pack` → `publish`):
 
-1. If pending changesets exist, the **version** job opens or updates a **Version Packages** PR (`changeset version`: bumps versions, writes changelogs, consumes changesets). Prefer **squash-merge** for that PR so `main` gets a single `Version Packages` commit.
-2. When that PR is merged and there are no remaining changesets, **pack** builds (`mise run build`) then packs tarballs, and **publish** uploads to npm via OIDC, creates git tags, and opens GitHub Releases.
+1. If pending changesets exist, the **version** job opens or updates a **Version Packages** PR (`changeset version`: bumps versions, writes changelogs, consumes changesets). Prefer **squash-merge** for that PR so `main` gets a single `Version Packages` commit. OSV-Scanner does not block this path.
+2. When that PR is merged and there are no remaining changesets, **osv-scan** runs a full [OSV-Scanner](https://google.github.io/osv-scanner/github-action/) pass, then **pack** builds (`mise run build`) and packs tarballs, and **publish** uploads to npm via OIDC, creates git tags, and opens GitHub Releases.
+
+PR and merge-group delta scans live in [`.github/workflows/osv-scanner-pr.yml`](./.github/workflows/osv-scanner-pr.yml); weekly and push-to-`main` full scans (SARIF → Security → Code scanning) in [`.github/workflows/osv-scanner.yml`](./.github/workflows/osv-scanner.yml).
 
 There is no `NPM_TOKEN` secret. Publishing uses npm [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (GitHub Actions OIDC). `id-token: write` is granted only on the publish job.
 
