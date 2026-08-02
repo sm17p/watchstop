@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core'
+import { Component } from '@angular/core'
 import { injectStopwatch } from '@watchstop/angular'
 
 @Component({
@@ -35,28 +35,24 @@ import { injectStopwatch } from '@watchstop/angular'
       <button type="button" (click)="toggleRun()">
         {{ running() ? 'Stop' : 'Start' }}
       </button>
-      <button type="button" (click)="resetIdle()">Reset</button>
+      <button type="button" (click)="reset()">Reset</button>
     </div>
   `,
 })
 export class AngularTimer {
   readonly binding = injectStopwatch()
   readonly elapsed = this.binding.elapsed
-  readonly running = signal(false)
+  readonly running = this.binding.running
+  readonly start = this.binding.start
+  readonly stop = this.binding.stop
+  readonly reset = this.binding.reset
   readonly Math = Math
 
   toggleRun(): void {
     if (this.running()) {
-      this.binding.stop()
-      this.running.set(false)
+      this.stop()
       return
     }
-    this.binding.start()
-    this.running.set(true)
-  }
-
-  resetIdle(): void {
-    this.binding.reset()
-    this.running.set(false)
+    this.start()
   }
 }

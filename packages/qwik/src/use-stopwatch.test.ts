@@ -46,14 +46,27 @@ describe('useStopwatch', () => {
     const binding = useStopwatch({ clock })
 
     binding.start()
+    expect(binding.running.value).toBe(true)
     clock.advance(16)
     expect(binding.elapsed.value).toBe(16)
 
     binding.stop()
+    expect(binding.running.value).toBe(false)
     clock.advance(32)
     expect(binding.elapsed.value).toBe(16)
 
     binding.reset()
+    expect(binding.elapsed.value).toBe(0)
+    expect(binding.running.value).toBe(false)
+  })
+
+  it('reflects running after start notifies at zero elapsed', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const binding = useStopwatch({ clock })
+
+    expect(binding.running.value).toBe(false)
+    binding.start()
+    expect(binding.running.value).toBe(true)
     expect(binding.elapsed.value).toBe(0)
   })
 

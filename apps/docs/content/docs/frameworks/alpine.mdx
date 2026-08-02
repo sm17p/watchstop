@@ -16,6 +16,7 @@ type CreateStopwatchOptions = {
 
 type StopwatchBinding = {
   elapsed: number
+  running: boolean
   start: () => void
   stop: () => void
   reset: () => void
@@ -34,8 +35,7 @@ declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBin
 ```html
 <div x-data="createStopwatch()">
   <p x-text="elapsed + ' ms'"></p>
-  <button @click="start()">Start</button>
-  <button @click="stop()">Stop</button>
+  <button @click="running ? stop() : start()" x-text="running ? 'Stop' : 'Start'"></button>
   <button @click="reset()">Reset</button>
 </div>
 ```

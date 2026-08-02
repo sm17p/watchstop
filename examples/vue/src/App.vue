@@ -1,23 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useStopwatch } from '@watchstop/vue'
 
-const { elapsed, start, stop, reset } = useStopwatch()
-const running = ref(false)
+const { elapsed, running, start, stop, reset } = useStopwatch()
 
 const toggleRun = () => {
   if (running.value) {
     stop()
-    running.value = false
     return
   }
   start()
-  running.value = true
-}
-
-const resetIdle = () => {
-  reset()
-  running.value = false
 }
 </script>
 
@@ -29,7 +20,7 @@ const resetIdle = () => {
       <button type="button" @click="toggleRun">
         {{ running ? 'Stop' : 'Start' }}
       </button>
-      <button type="button" @click="resetIdle">Reset</button>
+      <button type="button" @click="reset">Reset</button>
     </div>
   </div>
 </template>

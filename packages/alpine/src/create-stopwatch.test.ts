@@ -30,14 +30,30 @@ describe('createStopwatch', () => {
     binding.init()
 
     binding.start()
+    expect(binding.running).toBe(true)
     clock.advance(16)
     expect(binding.elapsed).toBe(16)
 
     binding.stop()
+    expect(binding.running).toBe(false)
     clock.advance(32)
     expect(binding.elapsed).toBe(16)
 
     binding.reset()
+    expect(binding.elapsed).toBe(0)
+    expect(binding.running).toBe(false)
+
+    binding.destroy()
+  })
+
+  it('reflects running after start notifies at zero elapsed', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const binding = createStopwatch({ clock })
+    binding.init()
+
+    expect(binding.running).toBe(false)
+    binding.start()
+    expect(binding.running).toBe(true)
     expect(binding.elapsed).toBe(0)
 
     binding.destroy()
@@ -90,6 +106,7 @@ describe('createStopwatch', () => {
     const binding = createStopwatch({ clock })
     const view: StopwatchBinding = {
       elapsed: -1,
+      running: false,
       start: binding.start,
       stop: binding.stop,
       reset: binding.reset,
@@ -100,10 +117,16 @@ describe('createStopwatch', () => {
 
     view.init()
     expect(view.elapsed).toBe(-1)
+    expect(view.running).toBe(false)
 
     view.start()
+    expect(view.running).toBe(true)
     clock.advance(16)
     expect(view.elapsed).toBe(16)
+    expect(view.running).toBe(true)
+
+    view.stop()
+    expect(view.running).toBe(false)
 
     view.destroy()
   })

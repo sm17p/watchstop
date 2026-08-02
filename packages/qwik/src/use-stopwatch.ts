@@ -16,6 +16,7 @@ export type UseStopwatchOptions = {
 
 export type StopwatchBinding = {
   elapsed: Signal<number>
+  running: Signal<boolean>
   start: QRL<() => void>
   stop: QRL<() => void>
   reset: QRL<() => void>
@@ -34,6 +35,7 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   }
 
   const elapsed = useSignal(ownedStopwatch.get())
+  const running = useSignal(ownedStopwatch.running)
 
   useVisibleTask$(({ cleanup }) => {
     const current = instance.value
@@ -42,6 +44,7 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     }
     const unsubscribe = current.subscribe((value) => {
       elapsed.value = value
+      running.value = current.running
     })
     cleanup(() => {
       unsubscribe()
@@ -51,6 +54,7 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
 
   return {
     elapsed,
+    running,
     start: $((): void => {
       instance.value?.start()
     }),

@@ -10,6 +10,7 @@ description: Elapsed-time Store built on an injectable Clock.
 ```ts
 class Stopwatch implements Store<number> {
   constructor(clock?: Clock)
+  get running(): boolean
   start(): void
   stop(): void
   reset(): void
@@ -59,11 +60,17 @@ While **stopped**, visible elapsed is `accumulated`.
 
 ## Methods
 
+### `running` (getter)
+
+- `false` after construct, `stop`, `reset`, and `destroy`.
+- `true` only while an active run segment is in progress (same flag as the internal model’s `running`).
+- Noun getter over a stored flag — not `isRunning()`.
+
 ### `start(): void`
 
 - If `destroyed`, no-op.
 - If already running, no-op (do **not** reset `startTime`).
-- Otherwise set `running = true`, `startTime = clock.now()`, schedule the tick loop, and notify if the visible value should refresh (usually still same number at t0; notifying is allowed but not required when value is unchanged).
+- Otherwise set `running = true`, `startTime = clock.now()`, schedule the tick loop, and **notify** listeners (even when elapsed is still `0`). Adapters sync UI `running` from this notification.
 
 ### `stop(): void`
 

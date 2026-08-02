@@ -45,15 +45,15 @@ Each adapter ships exactly one instance-owning entry point. The name follows the
 | `@watchstop/svelte` | `createStopwatch` | Svelte has no hook context; factory + `onDestroy` |
 | `@watchstop/alpine` | `createStopwatch` | Alpine has no hook/inject context; factory returns the binding |
 
-Factories exist where the framework has no hook or inject context to hang ownership and teardown on. The binding shape is the same everywhere: `elapsed`, `start`, `stop`, `reset`, and the owned `stopwatch`.
+Factories exist where the framework has no hook or inject context to hang ownership and teardown on. The binding shape is the same everywhere: `elapsed`, `running`, `start`, `stop`, `reset`, and the owned `stopwatch` (Svelte exposes `running` as a separate `Readable<boolean>`; `$stopwatch` stays elapsed ms).
 
 ## Data flow while running
 
-1. `start()` records `startTime = clock.now()` and schedules the next tick with `clock.schedule`.
+1. `start()` records `startTime = clock.now()`, schedules the next tick with `clock.schedule`, and notifies subscribers (even when elapsed is still `0`) so adapters can sync `running`.
 2. Each tick recomputes `elapsed = accumulated + (clock.now() - startTime)` and notifies subscribers.
-3. `stop()` cancels the scheduled handle, adds the current segment into `accumulated`, and clears `startTime`.
-4. `get()` returns the live elapsed value (running or stopped).
-5. `destroy()` stops scheduling, clears listeners, and makes further use a no-op or safe idle state (see [Stopwatch](/docs/core/stopwatch)).
+3. `stop()` cancels the scheduled handle, adds the current segment into `accumulated`, clears `startTime`, and sets `running = false`.
+4. `get()` returns the live elapsed value (running or stopped). `running` is the public flag for whether a segment is active.
+5. `destroy()` stops scheduling, clears listeners, sets `running = false`, and makes further use a no-op or safe idle state (see [Stopwatch](/docs/core/stopwatch)).
 
 ## Runtime matrix
 

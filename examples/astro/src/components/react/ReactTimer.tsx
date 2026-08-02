@@ -1,23 +1,14 @@
-import { useState } from 'react'
 import { useStopwatch } from '@watchstop/react'
 
 export default function ReactTimer() {
-  const { elapsed, start, stop, reset } = useStopwatch()
-  const [running, setRunning] = useState(false)
+  const { elapsed, running, start, stop, reset } = useStopwatch()
 
   const toggleRun = () => {
     if (running) {
       stop()
-      setRunning(false)
       return
     }
     start()
-    setRunning(true)
-  }
-
-  const resetIdle = () => {
-    reset()
-    setRunning(false)
   }
 
   return (
@@ -28,7 +19,7 @@ export default function ReactTimer() {
         <button type="button" onClick={toggleRun}>
           {running ? 'Stop' : 'Start'}
         </button>
-        <button type="button" onClick={resetIdle}>
+        <button type="button" onClick={reset}>
           Reset
         </button>
       </div>

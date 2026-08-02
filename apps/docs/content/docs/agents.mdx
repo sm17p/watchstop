@@ -46,6 +46,7 @@ type TimerClockOptions = {
 
 declare class Stopwatch implements Store<number> {
   constructor(clock?: Clock)
+  get running(): boolean
   start(): void
   stop(): void
   reset(): void
@@ -78,12 +79,13 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 ### Stopwatch
 
 - [ ] Default construction uses `detectClock()`.
-- [ ] Initial `get()` is `0`; not running.
+- [ ] Initial `get()` is `0`; `running` is `false`.
 - [ ] `get()` while running is **live** elapsed (as of the call), not only last tick.
+- [ ] `running` is `true` only during an active segment; `false` after construct, `stop`, `reset`, and `destroy`.
+- [ ] `start` notifies subscribers even when elapsed stays `0`; double `start` / double `stop` are no-ops.
 - [ ] `start` → `advance` → `get()` reflects elapsed; subscribers receive updates on ticks / mutating controls.
 - [ ] `stop` freezes elapsed; further `advance` does not change `get()`.
 - [ ] Second `start` after `stop` resumes from accumulated total.
-- [ ] Double `start` / double `stop` are no-ops.
 - [ ] `reset` sets elapsed to `0` and stops.
 - [ ] `subscribe` unsubscribe is idempotent; no calls after unsubscribe.
 - [ ] Multiple subscribers all receive updates.
@@ -116,6 +118,7 @@ type UseStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: number
+  running: boolean
   start: () => void
   stop: () => void
   reset: () => void
@@ -132,6 +135,7 @@ type UseStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: Readonly<ShallowRef<number>>
+  running: Readonly<ShallowRef<boolean>>
   start: () => void
   stop: () => void
   reset: () => void
@@ -148,6 +152,7 @@ type UseStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: Accessor<number>
+  running: Accessor<boolean>
   start: () => void
   stop: () => void
   reset: () => void
@@ -163,6 +168,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 type CreateStopwatchOptions = { clock?: Clock }
 
 type StopwatchStore = Readable<number> & {
+  running: Readable<boolean>
   start: () => void
   stop: () => void
   reset: () => void
@@ -220,6 +226,7 @@ type InjectStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
+  running: Signal<boolean>
   start: () => void
   stop: () => void
   reset: () => void
@@ -229,7 +236,7 @@ type StopwatchBinding = {
 declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBinding
 ```
 
-- Bridge `Store` → Angular **signal** (writable internally, exposed via `asReadonly`).
+- Bridge `Store` → Angular **signal** (writable internally, exposed via `asReadonly`). Sync `running` from `stopwatch.running` inside the existing `subscribe` path.
 - Must run in an injection context (`inject` / `DestroyRef`).
 - Unsubscribe / end bridging via `DestroyRef` — **not** by requiring core to know Angular.
 - Core must **not** import `@angular/*`.
@@ -242,6 +249,7 @@ type UseStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
+  running: Signal<boolean>
   start: QRL<() => void>
   stop: QRL<() => void>
   reset: QRL<() => void>
@@ -252,7 +260,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 ```
 
 - Peer is `@qwik.dev/core` (Qwik 2), not `@builder.io/qwik`.
-- Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks.
+- Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks. Sync `running` from `stopwatch.running` in that subscribe callback.
 - Hold the owned `Stopwatch` with `noSerialize()` on a signal holder so QRL captures are legal; expose controls as `$()` QRLs (`onClick$={start}`). For custom handlers, call methods on the exposed `stopwatch` instance instead of nesting QRL invokes.
 - Task cleanup unsubscribes and calls `destroy()`.
 - Keep adapter thin so core stays free of framework closures beyond user listeners.
@@ -266,6 +274,7 @@ type CreateStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: number
+  running: boolean
   start: () => void
   stop: () => void
   reset: () => void
@@ -279,7 +288,7 @@ declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBin
 
 - Alpine has no hook/inject context, so the entry point is a factory (same rationale as Svelte).
 - No plugin / `Alpine.data` registration helper — one entry point only; callers may wrap `createStopwatch()` in their own `Alpine.data` if they want a name.
-- `init` performs imperative `subscribe` (writes `elapsed` through `this` for Alpine reactivity).
+- `init` performs imperative `subscribe` (writes `elapsed` and `running` through `this` for Alpine reactivity).
 - `destroy` unsubscribes and destroys; Alpine invokes it on element removal.
 - Implication for core: destroy/unsubscribe paths must be idempotent (already required).
 

@@ -1,23 +1,14 @@
-import { createSignal } from 'solid-js'
 import { useStopwatch } from '@watchstop/solid'
 
 export default function SolidTimer() {
-  const { elapsed, start, stop, reset } = useStopwatch()
-  const [running, setRunning] = createSignal(false)
+  const { elapsed, running, start, stop, reset } = useStopwatch()
 
   const toggleRun = () => {
     if (running()) {
       stop()
-      setRunning(false)
       return
     }
     start()
-    setRunning(true)
-  }
-
-  const resetIdle = () => {
-    reset()
-    setRunning(false)
   }
 
   return (
@@ -28,7 +19,7 @@ export default function SolidTimer() {
         <button type="button" onClick={toggleRun}>
           {running() ? 'Stop' : 'Start'}
         </button>
-        <button type="button" onClick={resetIdle}>
+        <button type="button" onClick={reset}>
           Reset
         </button>
       </div>

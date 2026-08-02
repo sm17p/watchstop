@@ -7,18 +7,34 @@ describe('Stopwatch', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)
     expect(stopwatch.get()).toBe(0)
+    expect(stopwatch.running).toBe(false)
     mockClock.advance(50)
     expect(stopwatch.get()).toBe(0)
+    expect(stopwatch.running).toBe(false)
   })
 
   test('reports live elapsed while running', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)
     stopwatch.start()
+    expect(stopwatch.running).toBe(true)
     mockClock.advance(30)
     expect(stopwatch.get()).toBe(30)
     mockClock.advance(20)
     expect(stopwatch.get()).toBe(50)
+  })
+
+  test('notifies subscribers on start even when elapsed stays zero', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock)
+    const listener = vi.fn()
+    stopwatch.subscribe(listener)
+    stopwatch.start()
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenCalledWith(0)
+    expect(stopwatch.running).toBe(true)
+    stopwatch.start()
+    expect(listener).toHaveBeenCalledOnce()
   })
 
   test('freezes elapsed once stopped', () => {
@@ -28,6 +44,7 @@ describe('Stopwatch', () => {
     mockClock.advance(40)
     stopwatch.stop()
     expect(stopwatch.get()).toBe(40)
+    expect(stopwatch.running).toBe(false)
     mockClock.advance(100)
     expect(stopwatch.get()).toBe(40)
   })
@@ -100,11 +117,11 @@ describe('Stopwatch', () => {
     const unsubscribe = stopwatch.subscribe(listener)
     stopwatch.start()
     mockClock.advance(1)
-    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenCalledTimes(2)
     unsubscribe()
     unsubscribe()
     mockClock.advance(1)
-    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenCalledTimes(2)
   })
 
   test('notifies every subscriber with the same elapsed time', () => {
@@ -127,13 +144,15 @@ describe('Stopwatch', () => {
     const listener = vi.fn()
     stopwatch.subscribe(listener)
     stopwatch.start()
-    mockClock.advance(frameDelay - 1)
-    expect(listener).not.toHaveBeenCalled()
-    mockClock.advance(1)
     expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(0)
+    mockClock.advance(frameDelay - 1)
+    expect(listener).toHaveBeenCalledOnce()
+    mockClock.advance(1)
+    expect(listener).toHaveBeenCalledTimes(2)
     expect(listener).toHaveBeenLastCalledWith(frameDelay)
     mockClock.advance(frameDelay)
-    expect(listener).toHaveBeenCalledTimes(2)
+    expect(listener).toHaveBeenCalledTimes(3)
     expect(listener).toHaveBeenLastCalledWith(frameDelay * 2)
   })
 
@@ -159,8 +178,8 @@ describe('Stopwatch', () => {
     const subscribingListener = vi.fn(() => {
       stopwatch.subscribe(listenerAddedDuringNotification)
     })
-    stopwatch.subscribe(subscribingListener)
     stopwatch.start()
+    stopwatch.subscribe(subscribingListener)
     mockClock.advance(1)
     expect(subscribingListener).toHaveBeenCalledOnce()
     expect(listenerAddedDuringNotification).not.toHaveBeenCalled()
@@ -174,9 +193,9 @@ describe('Stopwatch', () => {
       unsubscribeSecondListener?.()
     })
     const secondListener = vi.fn()
+    stopwatch.start()
     stopwatch.subscribe(firstListener)
     unsubscribeSecondListener = stopwatch.subscribe(secondListener)
-    stopwatch.start()
     mockClock.advance(1)
     expect(firstListener).toHaveBeenCalledOnce()
     expect(secondListener).not.toHaveBeenCalled()
@@ -196,24 +215,29 @@ describe('Stopwatch', () => {
     const listenerAfterDestroy = vi.fn(() => {
       notifiedListenerNames.push('afterDestroy')
     })
+    stopwatch.start()
     stopwatch.subscribe(firstListener)
     stopwatch.subscribe(destroyingListener)
     stopwatch.subscribe(listenerAfterDestroy)
-    stopwatch.start()
     mockClock.advance(1)
     expect(notifiedListenerNames).toEqual(['first', 'destroying'])
     expect(listenerAfterDestroy).not.toHaveBeenCalled()
+    expect(stopwatch.running).toBe(false)
   })
 
   test('honours stop called from inside a listener', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)
-    stopwatch.subscribe(() => {
+    stopwatch.subscribe((elapsed) => {
+      if (elapsed === 0) {
+        return
+      }
       stopwatch.stop()
     })
     stopwatch.start()
     mockClock.advance(5)
     expect(stopwatch.get()).toBe(5)
+    expect(stopwatch.running).toBe(false)
     mockClock.advance(20)
     expect(stopwatch.get()).toBe(5)
   })
@@ -228,6 +252,7 @@ describe('Stopwatch', () => {
     listener.mockClear()
     stopwatch.destroy()
     expect(stopwatch.get()).toBe(12)
+    expect(stopwatch.running).toBe(false)
     mockClock.advance(100)
     expect(stopwatch.get()).toBe(12)
     expect(listener).not.toHaveBeenCalled()
@@ -235,6 +260,7 @@ describe('Stopwatch', () => {
     stopwatch.stop()
     stopwatch.reset()
     expect(stopwatch.get()).toBe(12)
+    expect(stopwatch.running).toBe(false)
   })
 
   test('never notifies a listener subscribed after destroy', () => {

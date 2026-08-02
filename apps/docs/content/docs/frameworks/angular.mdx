@@ -16,6 +16,7 @@ type InjectStopwatchOptions = {
 
 type StopwatchBinding = {
   elapsed: Signal<number>
+  running: Signal<boolean>
   start: () => void
   stop: () => void
   reset: () => void
@@ -37,14 +38,14 @@ import { injectStopwatch } from '@watchstop/angular'
   selector: 'app-timer',
   template: `
     <p>{{ elapsed() }} ms</p>
-    <button (click)="start()">Start</button>
-    <button (click)="stop()">Stop</button>
+    <button (click)="running() ? stop() : start()">{{ running() ? 'Stop' : 'Start' }}</button>
     <button (click)="reset()">Reset</button>
   `,
 })
 export class Timer {
   readonly binding = injectStopwatch()
   readonly elapsed = this.binding.elapsed
+  readonly running = this.binding.running
   readonly start = this.binding.start
   readonly stop = this.binding.stop
   readonly reset = this.binding.reset

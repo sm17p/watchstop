@@ -24,35 +24,25 @@
     }
 
     const stopwatch = new Stopwatch()
-    let running = false
 
-    const paintElapsed = (elapsed: number) => {
+    const paint = (elapsed: number) => {
       elapsedNode.textContent = `${Math.floor(elapsed)} ms`
+      toggleButton.textContent = stopwatch.running ? 'Stop' : 'Start'
     }
 
-    const paintToggle = () => {
-      toggleButton.textContent = running ? 'Stop' : 'Start'
-    }
-
-    paintElapsed(stopwatch.get())
-    paintToggle()
-    stopwatch.subscribe(paintElapsed)
+    paint(stopwatch.get())
+    stopwatch.subscribe(paint)
 
     toggleButton.addEventListener('click', () => {
-      if (running) {
+      if (stopwatch.running) {
         stopwatch.stop()
-        running = false
       } else {
         stopwatch.start()
-        running = true
       }
-      paintToggle()
     })
 
     resetButton.addEventListener('click', () => {
       stopwatch.reset()
-      running = false
-      paintToggle()
     })
   }
 

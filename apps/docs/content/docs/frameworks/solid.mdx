@@ -16,6 +16,7 @@ type UseStopwatchOptions = {
 
 type StopwatchBinding = {
   elapsed: Accessor<number>
+  running: Accessor<boolean>
   start: () => void
   stop: () => void
   reset: () => void
@@ -33,13 +34,12 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 import { useStopwatch } from '@watchstop/solid'
 
 export function Timer() {
-  const { elapsed, start, stop, reset } = useStopwatch()
+  const { elapsed, running, start, stop, reset } = useStopwatch()
 
   return (
     <>
       <p>{elapsed()} ms</p>
-      <button onClick={start}>Start</button>
-      <button onClick={stop}>Stop</button>
+      <button onClick={running() ? stop : start}>{running() ? 'Stop' : 'Start'}</button>
       <button onClick={reset}>Reset</button>
     </>
   )
