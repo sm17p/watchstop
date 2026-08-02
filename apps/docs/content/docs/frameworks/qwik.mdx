@@ -5,6 +5,8 @@ description: "@watchstop/qwik adapter."
 
 Wave 2 adapter bridging `Store` into a Qwik signal, with subscribe only on the client via `useVisibleTask$`. Peer dependency is **`@qwik.dev/core`** (Qwik 2 beta), not `@builder.io/qwik`. `@watchstop/core` is also a peer — install both.
 
+This package is published as a [Qwik library](https://qwik.dev/docs/advanced/library/): build with `vite build --mode lib` so the optimizer emits `index.qwik.mjs` / `.cjs`, and `package.json` exposes a `"qwik"` field pointing at that entry. Apps import `@watchstop/qwik` normally — do not import package `src`.
+
 ## Exact public names
 
 `useStopwatch` is the entire public API. The name follows Qwik's hooks idiom (same as React / Vue / Solid).

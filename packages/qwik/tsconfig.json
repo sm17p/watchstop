@@ -10,6 +10,11 @@
     "jsxImportSource": "@qwik.dev/core"
   },
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/root.tsx",
+    "src/entry.dev.tsx",
+    "src/entry.ssr.tsx"
+  ],
   "references": [{ "path": "../core" }]
 }

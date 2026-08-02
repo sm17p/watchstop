@@ -13,23 +13,22 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.qwik.mjs",
+      "require": "./dist/index.qwik.cjs"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "main": "./dist/index.qwik.cjs",
+  "module": "./dist/index.qwik.mjs",
+  "types": "./dist/index.d.ts",
+  "qwik": "./dist/index.qwik.mjs",
   "files": [
     "dist"
   ],
   "sideEffects": false,
+  "scripts": {
+    "build": "vite build --mode lib && tsc -p tsconfig.build.json"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -39,6 +38,8 @@
   },
   "devDependencies": {
     "@qwik.dev/core": "2.0.0-beta.38",
-    "@watchstop/core": "workspace:^"
+    "@watchstop/core": "workspace:^",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
   }
 }
