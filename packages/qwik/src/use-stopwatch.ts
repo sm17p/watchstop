@@ -1,6 +1,14 @@
 import { Stopwatch } from '@watchstop/core'
 import type { Clock } from '@watchstop/core'
-import { useSignal, useVisibleTask$, type Signal } from '@qwik.dev/core'
+import {
+  $,
+  noSerialize,
+  useSignal,
+  useVisibleTask$,
+  type NoSerialize,
+  type QRL,
+  type Signal,
+} from '@qwik.dev/core'
 
 export type UseStopwatchOptions = {
   clock?: Clock
@@ -8,37 +16,50 @@ export type UseStopwatchOptions = {
 
 export type StopwatchBinding = {
   elapsed: Signal<number>
-  start: () => void
-  stop: () => void
-  reset: () => void
+  start: QRL<() => void>
+  stop: QRL<() => void>
+  reset: QRL<() => void>
   stopwatch: Stopwatch
 }
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock)
-  const elapsed = useSignal(stopwatch.get())
+  const instance = useSignal<NoSerialize<Stopwatch>>()
+  if (instance.value === undefined) {
+    instance.value = noSerialize(new Stopwatch(options?.clock))
+  }
+
+  const ownedStopwatch = instance.value
+  if (ownedStopwatch === undefined) {
+    throw new Error('@watchstop/qwik: Stopwatch could not be created')
+  }
+
+  const elapsed = useSignal(ownedStopwatch.get())
 
   useVisibleTask$(({ cleanup }) => {
-    const unsubscribe = stopwatch.subscribe((value) => {
+    const current = instance.value
+    if (current === undefined) {
+      return
+    }
+    const unsubscribe = current.subscribe((value) => {
       elapsed.value = value
     })
     cleanup(() => {
       unsubscribe()
-      stopwatch.destroy()
+      current.destroy()
     })
   })
 
   return {
     elapsed,
-    start: (): void => {
-      stopwatch.start()
-    },
-    stop: (): void => {
-      stopwatch.stop()
-    },
-    reset: (): void => {
-      stopwatch.reset()
-    },
-    stopwatch,
+    start: $((): void => {
+      instance.value?.start()
+    }),
+    stop: $((): void => {
+      instance.value?.stop()
+    }),
+    reset: $((): void => {
+      instance.value?.reset()
+    }),
+    stopwatch: ownedStopwatch,
   }
 }

@@ -7,5 +7,16 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@watchstop/docs"]
+  "ignore": [
+    "@watchstop/docs",
+    "@watchstop/examples-astro",
+    "@watchstop/example-core",
+    "@watchstop/example-react",
+    "@watchstop/example-vue",
+    "@watchstop/example-svelte",
+    "@watchstop/example-solid",
+    "@watchstop/example-alpine",
+    "@watchstop/example-angular",
+    "@watchstop/example-qwik"
+  ]
 }

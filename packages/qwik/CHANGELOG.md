@@ -1,5 +1,11 @@
 # @watchstop/qwik
 
+## 1.0.2
+
+### Patch Changes
+
+- eb3df4a: Ship `@watchstop/qwik` as a Qwik library build (`index.qwik.mjs` + `"qwik"` package field) so `useVisibleTask$` is optimizer-safe, wrap the owned `Stopwatch` in `noSerialize()` on a signal holder with `$()` control QRLs, and document calling instance methods from custom handlers (nested QRL invokes are unreliable).
+
 ## 1.0.1
 
 ### Patch Changes

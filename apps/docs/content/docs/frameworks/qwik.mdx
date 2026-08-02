@@ -5,6 +5,10 @@ description: "@watchstop/qwik adapter."
 
 Wave 2 adapter bridging `Store` into a Qwik signal, with subscribe only on the client via `useVisibleTask$`. Peer dependency is **`@qwik.dev/core`** (Qwik 2 beta), not `@builder.io/qwik`. `@watchstop/core` is also a peer — install both.
 
+This package is published as a [Qwik library](https://qwik.dev/docs/advanced/library/): build with `vite build --mode lib` so the optimizer emits `index.qwik.mjs` / `.cjs`, and `package.json` exposes a `"qwik"` field pointing at that entry. Apps import `@watchstop/qwik` normally — do not import package `src`.
+
+The owned `Stopwatch` is held with [`noSerialize()`](https://qwik.dev/docs/advanced/dollar/) inside a signal so QRL closures (visible task and controls) can capture a serializable holder. Controls are `$()` QRLs safe for `onClick$={start}`; handlers that need custom logic should call methods on the exposed `stopwatch` instance (also `noSerialize`) instead of nesting QRL invokes.
+
 ## Exact public names
 
 `useStopwatch` is the entire public API. The name follows Qwik's hooks idiom (same as React / Vue / Solid).
@@ -16,9 +20,9 @@ type UseStopwatchOptions = {
 
 type StopwatchBinding = {
   elapsed: Signal<number>
-  start: () => void
-  stop: () => void
-  reset: () => void
+  start: QRL<() => void>
+  stop: QRL<() => void>
+  reset: QRL<() => void>
   stopwatch: Stopwatch
 }
 

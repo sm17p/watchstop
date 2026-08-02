@@ -242,9 +242,9 @@ type UseStopwatchOptions = { clock?: Clock }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
-  start: () => void
-  stop: () => void
-  reset: () => void
+  start: QRL<() => void>
+  stop: QRL<() => void>
+  reset: QRL<() => void>
   stopwatch: Stopwatch
 }
 
@@ -253,9 +253,11 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 
 - Peer is `@qwik.dev/core` (Qwik 2), not `@builder.io/qwik`.
 - Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks.
+- Hold the owned `Stopwatch` with `noSerialize()` on a signal holder so QRL captures are legal; expose controls as `$()` QRLs (`onClick$={start}`). For custom handlers, call methods on the exposed `stopwatch` instance instead of nesting QRL invokes.
 - Task cleanup unsubscribes and calls `destroy()`.
-- Keep adapter thin so core stays free of framework closures and serialization concerns.
+- Keep adapter thin so core stays free of framework closures beyond user listeners.
 - Implication for core: `Stopwatch` instances are client-owned; core holds no framework callbacks beyond user listeners.
+- Package as a [Qwik library](https://qwik.dev/docs/advanced/library/) (`vite build --mode lib`, `"qwik"` field, `index.qwik.mjs`).
 
 ### Alpine (`@watchstop/alpine`) — Wave 2
 
