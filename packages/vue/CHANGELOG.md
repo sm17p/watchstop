@@ -1,5 +1,13 @@
 # @watchstop/vue
 
+## 1.0.1
+
+### Patch Changes
+
+- 6d3ccb2: Test release pipeline after Changesets CLI v3 alignment
+- Updated dependencies [6d3ccb2]
+  - @watchstop/core@0.1.1
+
 ## 1.0.0
 
 ### Minor Changes
