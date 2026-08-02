@@ -1,6 +1,15 @@
 {
   "name": "@watchstop/angular",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sm17p/watchstop.git",
+    "directory": "packages/angular"
+  },
+  "homepage": "https://github.com/sm17p/watchstop#readme",
+  "bugs": {
+    "url": "https://github.com/sm17p/watchstop/issues"
+  },
   "type": "module",
   "exports": {
     ".": {
