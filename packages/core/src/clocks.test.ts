@@ -13,167 +13,189 @@ afterEach(() => {
 })
 
 describe('createMockClock', () => {
-  test('now starts at 0 and increases only via advance', () => {
-    const clock = createMockClock()
-    expect(clock.now()).toBe(0)
-    clock.advance(25)
-    expect(clock.now()).toBe(25)
-    clock.advance(10)
-    expect(clock.now()).toBe(35)
+  test('starts at zero and moves forward only when advanced', () => {
+    const mockClock = createMockClock()
+    expect(mockClock.now()).toBe(0)
+    mockClock.advance(25)
+    expect(mockClock.now()).toBe(25)
+    mockClock.advance(10)
+    expect(mockClock.now()).toBe(35)
   })
 
-  test('schedule never runs synchronously and uses dueTime now + frameDelay', () => {
-    const clock = createMockClock({ frameDelay: 5 })
-    const callback = vi.fn()
-    clock.schedule(callback)
-    expect(callback).not.toHaveBeenCalled()
-    clock.advance(4)
-    expect(callback).not.toHaveBeenCalled()
-    clock.advance(1)
-    expect(callback).toHaveBeenCalledOnce()
+  test('runs a scheduled callback only once the frame delay has elapsed', () => {
+    const frameDelay = 5
+    const mockClock = createMockClock({ frameDelay })
+    const scheduledCallback = vi.fn()
+    mockClock.schedule(scheduledCallback)
+    expect(scheduledCallback).not.toHaveBeenCalled()
+    mockClock.advance(frameDelay - 1)
+    expect(scheduledCallback).not.toHaveBeenCalled()
+    mockClock.advance(1)
+    expect(scheduledCallback).toHaveBeenCalledOnce()
   })
 
-  test('default frameDelay is 0', () => {
-    const clock = createMockClock()
-    const callback = vi.fn()
-    clock.schedule(callback)
-    clock.advance(0)
-    expect(callback).toHaveBeenCalledOnce()
+  test('rejects advancing by a negative or non-finite duration', () => {
+    const mockClock = createMockClock()
+    expect(() => mockClock.advance(Number.NaN)).toThrow(RangeError)
+    expect(() => mockClock.advance(Number.POSITIVE_INFINITY)).toThrow(RangeError)
+    expect(() => mockClock.advance(-1)).toThrow(RangeError)
   })
 
-  test('advance throws for non-finite or negative ms', () => {
-    const clock = createMockClock()
-    expect(() => clock.advance(Number.NaN)).toThrow(RangeError)
-    expect(() => clock.advance(Number.POSITIVE_INFINITY)).toThrow(RangeError)
-    expect(() => clock.advance(-1)).toThrow(RangeError)
-  })
-
-  test('frameDelay throws when invalid', () => {
+  test('rejects a negative or non-finite frame delay', () => {
     expect(() => createMockClock({ frameDelay: -1 })).toThrow(RangeError)
     expect(() => createMockClock({ frameDelay: Number.NaN })).toThrow(RangeError)
+    expect(() =>
+      createMockClock({ frameDelay: Number.POSITIVE_INFINITY }),
+    ).toThrow(RangeError)
   })
 
-  test('advance single-pass flush; nested schedule waits for later advance', () => {
-    const clock = createMockClock()
-    const order: string[] = []
-    clock.schedule(() => {
-      order.push('first')
-      clock.schedule(() => {
-        order.push('nested')
+  test('defers a callback scheduled from inside a callback to the next advance', () => {
+    const mockClock = createMockClock()
+    const callbackRunOrder: string[] = []
+    mockClock.schedule(() => {
+      callbackRunOrder.push('first')
+      mockClock.schedule(() => {
+        callbackRunOrder.push('nested')
       })
     })
-    clock.advance(0)
-    expect(order).toEqual(['first'])
-    clock.advance(0)
-    expect(order).toEqual(['first', 'nested'])
+    mockClock.advance(0)
+    expect(callbackRunOrder).toEqual(['first'])
+    mockClock.advance(0)
+    expect(callbackRunOrder).toEqual(['first', 'nested'])
   })
 
-  test('flush is stable by due time then insertion order', () => {
-    const clock = createMockClock()
-    const order: number[] = []
-    clock.schedule(() => {
-      order.push(1)
+  test('runs callbacks due on the next advance, in scheduling order', () => {
+    const mockClock = createMockClock()
+    const callbackRunOrder: number[] = []
+    mockClock.schedule(() => {
+      callbackRunOrder.push(1)
     })
-    clock.schedule(() => {
-      order.push(2)
+    mockClock.schedule(() => {
+      callbackRunOrder.push(2)
     })
-    clock.advance(0)
-    expect(order).toEqual([1, 2])
+    mockClock.advance(0)
+    expect(callbackRunOrder).toEqual([1, 2])
   })
 
-  test('cancel is idempotent and prevents the callback', () => {
-    const clock = createMockClock()
-    const callback = vi.fn()
-    const handle = clock.schedule(callback)
-    clock.cancel(handle)
-    clock.cancel(handle)
-    clock.cancel(Symbol('unknown'))
-    clock.advance(0)
-    expect(callback).not.toHaveBeenCalled()
+  test('never runs a cancelled callback and ignores repeated or unknown cancels', () => {
+    const mockClock = createMockClock()
+    const cancelledCallback = vi.fn()
+    const scheduleHandle = mockClock.schedule(cancelledCallback)
+    mockClock.cancel(scheduleHandle)
+    mockClock.cancel(scheduleHandle)
+    mockClock.cancel(Symbol('unknown'))
+    mockClock.advance(0)
+    expect(cancelledCallback).not.toHaveBeenCalled()
   })
 })
 
 describe('createTimerClock', () => {
-  test('uses intervalMs for setTimeout', async () => {
+  test('runs a scheduled callback once the configured interval has elapsed', async () => {
     vi.useFakeTimers()
-    const clock = createTimerClock({ intervalMs: 40 })
-    const callback = vi.fn()
-    clock.schedule(callback)
-    expect(callback).not.toHaveBeenCalled()
-    await vi.advanceTimersByTimeAsync(39)
-    expect(callback).not.toHaveBeenCalled()
+    const intervalMs = 40
+    const timerClock = createTimerClock({ intervalMs })
+    const scheduledCallback = vi.fn()
+    timerClock.schedule(scheduledCallback)
+    expect(scheduledCallback).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(intervalMs - 1)
+    expect(scheduledCallback).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(1)
-    expect(callback).toHaveBeenCalledOnce()
+    expect(scheduledCallback).toHaveBeenCalledOnce()
   })
 
-  test('throws when intervalMs is not finite > 0', () => {
+  test('rejects an interval that is not a finite positive number', () => {
     expect(() => createTimerClock({ intervalMs: 0 })).toThrow(RangeError)
     expect(() => createTimerClock({ intervalMs: -5 })).toThrow(RangeError)
     expect(() => createTimerClock({ intervalMs: Number.NaN })).toThrow(RangeError)
   })
 
-  test('cancel prevents the callback', async () => {
+  test('never runs a cancelled callback and tolerates cancelling twice', async () => {
     vi.useFakeTimers()
-    const clock = createTimerClock({ intervalMs: 10 })
-    const callback = vi.fn()
-    const handle = clock.schedule(callback)
-    clock.cancel(handle)
-    clock.cancel(handle)
-    await vi.advanceTimersByTimeAsync(50)
-    expect(callback).not.toHaveBeenCalled()
+    const intervalMs = 10
+    const timerClock = createTimerClock({ intervalMs })
+    const cancelledCallback = vi.fn()
+    const scheduleHandle = timerClock.schedule(cancelledCallback)
+    timerClock.cancel(scheduleHandle)
+    timerClock.cancel(scheduleHandle)
+    await vi.advanceTimersByTimeAsync(intervalMs * 5)
+    expect(cancelledCallback).not.toHaveBeenCalled()
+  })
+
+  test('ignores cancelling a handle it never issued', async () => {
+    vi.useFakeTimers()
+    const intervalMs = 10
+    const timerClock = createTimerClock({ intervalMs })
+    const scheduledCallback = vi.fn()
+    timerClock.schedule(scheduledCallback)
+    timerClock.cancel(Symbol('unknown'))
+    timerClock.cancel('not-a-handle')
+    await vi.advanceTimersByTimeAsync(intervalMs)
+    expect(scheduledCallback).toHaveBeenCalledOnce()
   })
 })
 
+function stubAnimationFrames(): Map<number, FrameRequestCallback> {
+  const pendingFrameCallbacks = new Map<number, FrameRequestCallback>()
+  let nextFrameId = 1
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    (callback: FrameRequestCallback): number => {
+      const frameId = nextFrameId
+      nextFrameId += 1
+      pendingFrameCallbacks.set(frameId, callback)
+      return frameId
+    },
+  )
+  vi.stubGlobal('cancelAnimationFrame', (frameId: number): void => {
+    pendingFrameCallbacks.delete(frameId)
+  })
+  return pendingFrameCallbacks
+}
+
 describe('createBrowserClock', () => {
-  test('throws when requestAnimationFrame is missing', () => {
+  test('refuses to be created without requestAnimationFrame', () => {
     vi.stubGlobal('requestAnimationFrame', undefined)
     vi.stubGlobal('cancelAnimationFrame', undefined)
     expect(() => createBrowserClock()).toThrow()
   })
 
-  test('schedules with rAF and does not run synchronously', () => {
-    const pending = new Map<number, FrameRequestCallback>()
-    let nextId = 1
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      (callback: FrameRequestCallback): number => {
-        const id = nextId
-        nextId += 1
-        pending.set(id, callback)
-        return id
-      },
-    )
-    vi.stubGlobal('cancelAnimationFrame', (id: number): void => {
-      pending.delete(id)
-    })
+  test('reports the current time as a number', () => {
+    stubAnimationFrames()
+    const browserClock = createBrowserClock()
+    expect(typeof browserClock.now()).toBe('number')
+  })
 
-    const clock = createBrowserClock()
-    const callback = vi.fn()
-    const handle = clock.schedule(callback)
-    expect(callback).not.toHaveBeenCalled()
-    expect(typeof clock.now()).toBe('number')
-    expect(typeof handle).toBe('number')
-    if (typeof handle === 'number') {
-      const queued = pending.get(handle)
-      expect(queued).toBeTypeOf('function')
-      if (queued !== undefined) {
-        queued(0)
+  test('defers callbacks to the next animation frame and drops cancelled ones', () => {
+    const pendingFrameCallbacks = stubAnimationFrames()
+
+    const browserClock = createBrowserClock()
+    const scheduledCallback = vi.fn()
+    const scheduleHandle = browserClock.schedule(scheduledCallback)
+    expect(scheduledCallback).not.toHaveBeenCalled()
+    expect(typeof scheduleHandle).toBe('number')
+    if (typeof scheduleHandle === 'number') {
+      const queuedFrameCallback = pendingFrameCallbacks.get(scheduleHandle)
+      expect(queuedFrameCallback).toBeTypeOf('function')
+      if (queuedFrameCallback !== undefined) {
+        queuedFrameCallback(0)
       }
     }
-    expect(callback).toHaveBeenCalledOnce()
+    expect(scheduledCallback).toHaveBeenCalledOnce()
 
-    const cancelled = vi.fn()
-    const cancelledHandle = clock.schedule(cancelled)
-    clock.cancel(cancelledHandle)
-    clock.cancel(cancelledHandle)
+    const cancelledCallback = vi.fn()
+    const cancelledHandle = browserClock.schedule(cancelledCallback)
+    browserClock.cancel(cancelledHandle)
+    browserClock.cancel(cancelledHandle)
+    expect(typeof cancelledHandle).toBe('number')
     if (typeof cancelledHandle === 'number') {
-      expect(pending.has(cancelledHandle)).toBe(false)
+      expect(pendingFrameCallbacks.has(cancelledHandle)).toBe(false)
     }
+    expect(cancelledCallback).not.toHaveBeenCalled()
   })
 })
 
 describe('detectClock', () => {
-  test('returns browser clock when requestAnimationFrame is a function', () => {
+  test('picks the browser clock when requestAnimationFrame is available', () => {
     vi.stubGlobal(
       'requestAnimationFrame',
       (callback: FrameRequestCallback): number => {
@@ -182,19 +204,20 @@ describe('detectClock', () => {
       },
     )
     vi.stubGlobal('cancelAnimationFrame', (): void => {})
-    const clock = detectClock()
-    const callback = vi.fn()
-    clock.schedule(callback)
-    expect(callback).toHaveBeenCalledOnce()
+    const detectedClock = detectClock()
+    const scheduledCallback = vi.fn()
+    detectedClock.schedule(scheduledCallback)
+    expect(scheduledCallback).toHaveBeenCalledOnce()
   })
 
-  test('returns timer clock when requestAnimationFrame is absent', async () => {
+  test('falls back to the timer clock without requestAnimationFrame', async () => {
+    const defaultTimerIntervalMs = 16
     vi.useFakeTimers()
     vi.stubGlobal('requestAnimationFrame', undefined)
-    const clock = detectClock()
-    const callback = vi.fn()
-    clock.schedule(callback)
-    await vi.advanceTimersByTimeAsync(16)
-    expect(callback).toHaveBeenCalledOnce()
+    const detectedClock = detectClock()
+    const scheduledCallback = vi.fn()
+    detectedClock.schedule(scheduledCallback)
+    await vi.advanceTimersByTimeAsync(defaultTimerIntervalMs)
+    expect(scheduledCallback).toHaveBeenCalledOnce()
   })
 })
