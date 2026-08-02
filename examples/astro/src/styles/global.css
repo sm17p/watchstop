@@ -1,0 +1,131 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c0c0c;
+  --fg: #e8e4dc;
+  --muted: #8a857c;
+  --accent: #c4a574;
+  --line: #2a2824;
+  --btn: #161512;
+  --btn-hover: #221f1a;
+  --panel: #12110e;
+  --focus: #e8e4dc;
+  font-family: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  background:
+    radial-gradient(900px 480px at 8% -8%, #1f1a14 0%, transparent 55%),
+    radial-gradient(700px 420px at 100% 0%, #141210 0%, var(--bg) 60%);
+  color: var(--fg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page {
+  width: min(72rem, calc(100vw - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.hero {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 36rem;
+}
+
+.brand {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.island {
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  min-height: 11rem;
+}
+
+.island .label {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.island .elapsed {
+  margin: 0;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.island .controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.island button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--btn);
+  color: var(--fg);
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.island button:hover {
+  background: var(--btn-hover);
+  border-color: #3a362f;
+}
+
+.island button:active {
+  transform: translateY(1px);
+}
+
+.island button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .island button {
+    transition: none;
+  }
+}

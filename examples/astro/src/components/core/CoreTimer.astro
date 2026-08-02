@@ -1,0 +1,48 @@
+<div data-core-timer>
+  <p class="label">core</p>
+  <p class="elapsed" data-elapsed>0 ms</p>
+  <div class="controls">
+    <button type="button" data-start>Start</button>
+    <button type="button" data-stop>Stop</button>
+    <button type="button" data-reset>Reset</button>
+  </div>
+</div>
+
+<script>
+  import { Stopwatch } from '@watchstop/core'
+
+  const bindCoreTimer = (root: Element) => {
+    const elapsedNode = root.querySelector('[data-elapsed]')
+    const startButton = root.querySelector('[data-start]')
+    const stopButton = root.querySelector('[data-stop]')
+    const resetButton = root.querySelector('[data-reset]')
+
+    if (
+      !(elapsedNode instanceof HTMLElement) ||
+      !(startButton instanceof HTMLButtonElement) ||
+      !(stopButton instanceof HTMLButtonElement) ||
+      !(resetButton instanceof HTMLButtonElement)
+    ) {
+      return
+    }
+
+    const stopwatch = new Stopwatch()
+    const paintElapsed = (elapsed: number) => {
+      elapsedNode.textContent = `${Math.floor(elapsed)} ms`
+    }
+
+    paintElapsed(stopwatch.get())
+    stopwatch.subscribe(paintElapsed)
+    startButton.addEventListener('click', () => {
+      stopwatch.start()
+    })
+    stopButton.addEventListener('click', () => {
+      stopwatch.stop()
+    })
+    resetButton.addEventListener('click', () => {
+      stopwatch.reset()
+    })
+  }
+
+  document.querySelectorAll('[data-core-timer]').forEach(bindCoreTimer)
+</script>

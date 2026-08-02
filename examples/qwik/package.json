@@ -1,0 +1,19 @@
+{
+  "name": "@watchstop/example-qwik",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@qwik.dev/core": "2.0.0-beta.38",
+    "@watchstop/core": "workspace:*",
+    "@watchstop/qwik": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0"
+  }
+}

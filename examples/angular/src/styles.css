@@ -1,0 +1,85 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c0c0c;
+  --fg: #e8e4dc;
+  --muted: #8a857c;
+  --accent: #c4a574;
+  --line: #2a2824;
+  --btn: #161512;
+  --btn-hover: #221f1a;
+  --focus: #e8e4dc;
+  font-family: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  background: radial-gradient(1200px 600px at 10% -10%, #1a1712 0%, var(--bg) 55%);
+  color: var(--fg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.timer {
+  width: min(24rem, calc(100vw - 2rem));
+  display: grid;
+  gap: 1.25rem;
+}
+
+.brand {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.elapsed {
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--accent);
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--btn);
+  color: var(--fg);
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+button:hover {
+  background: var(--btn-hover);
+  border-color: #3a362f;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}

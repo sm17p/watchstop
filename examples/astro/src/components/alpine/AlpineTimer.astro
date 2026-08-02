@@ -1,0 +1,12 @@
+---
+---
+
+<div x-data="timer">
+  <p class="label">alpine</p>
+  <p class="elapsed" x-text="Math.floor(elapsed) + ' ms'"></p>
+  <div class="controls">
+    <button type="button" @click="start()">Start</button>
+    <button type="button" @click="stop()">Stop</button>
+    <button type="button" @click="reset()">Reset</button>
+  </div>
+</div>

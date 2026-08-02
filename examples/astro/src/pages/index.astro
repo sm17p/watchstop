@@ -1,0 +1,58 @@
+---
+import '../styles/global.css'
+import CoreTimer from '../components/core/CoreTimer.astro'
+import ReactTimer from '../components/react/ReactTimer'
+import VueTimer from '../components/vue/VueTimer.vue'
+import SvelteTimer from '../components/svelte/SvelteTimer.svelte'
+import SolidTimer from '../components/solid/SolidTimer'
+import AlpineTimer from '../components/alpine/AlpineTimer.astro'
+import { AngularTimer } from '../components/angular/angular-timer'
+import QwikTimerIsland from '../components/qwik/QwikTimerIsland.astro'
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>watchstop examples</title>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="brand">watchstop</p>
+        <h1 class="headline">Multi-framework playground</h1>
+        <p class="lede">
+          One island per package. Start, stop, and reset each timer after
+          <code>mise run build</code>.
+        </p>
+      </header>
+
+      <section class="grid" aria-label="Package timers">
+        <article class="island">
+          <CoreTimer />
+        </article>
+        <article class="island">
+          <ReactTimer client:only="react" />
+        </article>
+        <article class="island">
+          <VueTimer client:only="vue" />
+        </article>
+        <article class="island">
+          <SvelteTimer client:only="svelte" />
+        </article>
+        <article class="island">
+          <SolidTimer client:only="solid-js" />
+        </article>
+        <article class="island">
+          <AlpineTimer />
+        </article>
+        <article class="island">
+          <AngularTimer client:only="@analogjs/astro-angular" />
+        </article>
+        <article class="island">
+          <QwikTimerIsland />
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
