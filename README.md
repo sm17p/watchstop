@@ -29,12 +29,14 @@ Do **not** run `changeset publish`, `pnpm release`, or `mise run release` from r
 
 ### Version Packages PR
 
-On push to `main`, [`.github/workflows/release.yml`](./.github/workflows/release.yml) uses the Changesets [Trusted Publishing](https://changesets.dev/guide/automating) split jobs (`select-mode` → `version` or `pack` → `publish`):
+On push to `main` (or manual **Run workflow**), [`.github/workflows/release.yml`](./.github/workflows/release.yml) uses the Changesets [Trusted Publishing](https://changesets.dev/guide/automating) split jobs (`select-mode` → `version` or `pack` → `publish`):
 
 1. If pending changesets exist, the **version** job opens or updates a **Version Packages** PR (`changeset version`: bumps versions, writes changelogs, consumes changesets). Prefer **squash-merge** for that PR so `main` gets a single `Version Packages` commit.
 2. When that PR is merged and there are no remaining changesets, **pack** builds (`mise run build`) then packs tarballs, and **publish** uploads to npm via OIDC, creates git tags, and opens GitHub Releases.
 
 There is no `NPM_TOKEN` secret. Publishing uses npm [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (GitHub Actions OIDC). `id-token: write` is granted only on the publish job.
+
+Do not put GitHub [workflow-skip markers](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs) in squash-merge commit messages or in PR bodies that become those messages. A substring match suppresses **all** `push` workflows on that commit (Release, CI, and Deploy docs). The Version Packages commit title stays `Version Packages` with no skip marker.
 
 ### Trusted Publisher setup (manual)
 
