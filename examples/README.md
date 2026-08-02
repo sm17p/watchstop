@@ -45,7 +45,7 @@ Each app shows elapsed milliseconds with Start / Stop / Reset using that package
 
 ## Notes
 
-- Astro pins Vite 7 (individual apps use Vite 8) so Qwik’s optimizer stays compatible with the multi-renderer playground.
+- Astro pins Vite 7; individual apps use Vite 8.
 - Angular examples require TypeScript 6 (Angular 22 compiler).
-- The Astro Qwik island mounts via CSR (`qwikVite({ csr: true })`) rather than `@qwik.dev/astro`, which currently fails to inject its client manifest under Astro 6 multi-renderer builds. The dedicated `examples/qwik` app remains the primary Qwik smoke test.
-- Framework islands in Astro use `client:only` where JSX transforms collide across React / Solid / Qwik.
+- Astro’s Qwik slot is a working `@watchstop/core` CSR stub (same Start/Stop/Reset UI). `component$` + `qwikVite` emit lazy `*_component_*.js` chunks that fail to resolve through Astro’s script pipeline in this multi-renderer app, and `@qwik.dev/astro` still fails client-manifest injection under Astro 6. Use `examples/qwik` for the real `@watchstop/qwik` adapter.
+- Framework islands in Astro use `client:only` where JSX transforms would collide.

@@ -5,7 +5,6 @@ import svelte from '@astrojs/svelte'
 import solid from '@astrojs/solid-js'
 import alpinejs from '@astrojs/alpinejs'
 import angular from '@analogjs/astro-angular'
-import { qwikVite } from '@qwik.dev/core/optimizer'
 
 export default defineConfig({
   integrations: [
@@ -21,9 +20,6 @@ export default defineConfig({
     }),
   ],
   vite: {
-    define: {
-      __EXPERIMENTAL__: JSON.stringify({ suspense: false }),
-    },
     ssr: {
       noExternal: [
         '@watchstop/angular',
@@ -32,11 +28,5 @@ export default defineConfig({
         '@angular/common',
       ],
     },
-    plugins: [
-      qwikVite({
-        csr: true,
-        fileFilter: (id) => id.includes('/qwik/'),
-      }),
-    ],
   },
 })
