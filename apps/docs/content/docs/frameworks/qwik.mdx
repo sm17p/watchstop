@@ -3,4 +3,73 @@ title: Qwik
 description: "@watchstop/qwik adapter."
 ---
 
-Docs after core ships. Wave 2 client-visible subscribe bridge.
+Wave 2 adapter bridging `Store` into a Qwik signal, with subscribe only on the client via `useVisibleTask$`. Peer dependency is **`@qwik.dev/core`** (Qwik 2 beta), not `@builder.io/qwik`. `@watchstop/core` is also a peer — install both.
+
+## Exact public names
+
+`useStopwatch` is the entire public API. The name follows Qwik's hooks idiom (same as React / Vue / Solid).
+
+```ts
+type UseStopwatchOptions = {
+  clock?: Clock
+}
+
+type StopwatchBinding = {
+  elapsed: Signal<number>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+## `useStopwatch`
+
+`useStopwatch` owns a `Stopwatch` and its teardown, so a component that needs its own timer imports one thing and holds no instance itself.
+
+```tsx
+import { component$ } from '@qwik.dev/core'
+import { useStopwatch } from '@watchstop/qwik'
+
+export const Timer = component$(() => {
+  const { elapsed, start, stop, reset } = useStopwatch()
+
+  return (
+    <>
+      <p>{elapsed.value} ms</p>
+      <button onClick$={start}>Start</button>
+      <button onClick$={stop}>Stop</button>
+      <button onClick$={reset}>Reset</button>
+    </>
+  )
+})
+```
+
+- Construction is inert. Nothing is scheduled until `start()`.
+- `useVisibleTask$` registers the `subscribe` bridge only after the component is visible on the client, so SSR does not leak subscriptions.
+- Task `cleanup` unsubscribes and calls `destroy()` when the task is disposed (component unmount / re-run).
+- `elapsed` is a Qwik `Signal<number>`. `stopwatch` is the owned instance, exposed for passing elsewhere; do not call `destroy()` on it yourself.
+
+### Options
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+
+## Sharing one stopwatch across components
+
+Not supported in v1. Each `useStopwatch()` call constructs and owns its own instance. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6).
+
+## Contract
+
+- The signal starts at `store.get()` and is written only from the client `subscribe` bridge.
+- Subscribe and destroy run inside `useVisibleTask$`, not during SSR task execution.
+- Controls stay on the `Stopwatch`.
+
+## Re-render cost
+
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Keep the `elapsed` read in the smallest possible component.
+
+See [Store](/docs/core/store) and [Agents](/docs/agents).

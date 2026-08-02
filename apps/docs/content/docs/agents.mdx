@@ -237,7 +237,23 @@ declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBin
 
 ### Qwik (`@watchstop/qwik`) — Wave 2
 
-- Subscribe **only on the client** (e.g. `useVisibleTask$` / equivalent). No SSR subscription leaks.
+```ts
+type UseStopwatchOptions = { clock?: Clock }
+
+type StopwatchBinding = {
+  elapsed: Signal<number>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+- Peer is `@qwik.dev/core` (Qwik 2), not `@builder.io/qwik`.
+- Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks.
+- Task cleanup unsubscribes and calls `destroy()`.
 - Keep adapter thin so core stays free of framework closures and serialization concerns.
 - Implication for core: `Stopwatch` instances are client-owned; core holds no framework callbacks beyond user listeners.
 
