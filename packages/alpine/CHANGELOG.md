@@ -1,5 +1,13 @@
 # @watchstop/alpine
 
+## 1.0.2
+
+### Patch Changes
+
+- 2818162: Clear OSV-Scanner full-scan findings on main by upgrading Astro in examples and overriding vulnerable transitive `postcss` / `sharp` from Next.
+- Updated dependencies [2818162]
+  - @watchstop/core@0.1.2
+
 ## 1.0.1
 
 ### Patch Changes
