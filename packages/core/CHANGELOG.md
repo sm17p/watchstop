@@ -1,5 +1,11 @@
 # @watchstop/core
 
+## 0.1.1
+
+### Patch Changes
+
+- 6d3ccb2: Test release pipeline after Changesets CLI v3 alignment
+
 ## 0.1.0
 
 ### Minor Changes
