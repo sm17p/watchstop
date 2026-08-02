@@ -9,12 +9,13 @@ zizmor = "1.28.0"
 _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tasks.build]
-description = "Build packages with tsdown (no-op when packages/ is empty)"
+description = "Build packages with tsdown (and Qwik library vite)"
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
 if ls packages/*/package.json >/dev/null 2>&1; then
   tsdown
+  pnpm --filter @watchstop/qwik run build
 else
   echo 'No packages yet; skipping.'
 fi
