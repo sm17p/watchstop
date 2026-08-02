@@ -31,6 +31,22 @@ detectClock         ───────────────┘
 4. **Countdown / Ticker are out of v1.** Only `Stopwatch` ships in the first core release.
 5. **Adapters are thin.** No timing math, no clocks, no elapsed accumulation in adapters.
 
+## Adapter entry-point naming
+
+Each adapter ships exactly one instance-owning entry point. The name follows the framework idiom rather than forcing one shape across ecosystems:
+
+| Package | Entry point | Why that name |
+| --- | --- | --- |
+| `@watchstop/react` | `useStopwatch` | React hooks |
+| `@watchstop/vue` | `useStopwatch` | Vue composables |
+| `@watchstop/solid` | `useStopwatch` | Solid hooks |
+| `@watchstop/qwik` | `useStopwatch` | Qwik hooks |
+| `@watchstop/angular` | `injectStopwatch` | Angular `inject` / injection-context idiom |
+| `@watchstop/svelte` | `createStopwatch` | Svelte has no hook context; factory + `onDestroy` |
+| `@watchstop/alpine` | `createStopwatch` | Alpine has no hook/inject context; factory returns the binding |
+
+Factories exist where the framework has no hook or inject context to hang ownership and teardown on. The binding shape is the same everywhere: `elapsed`, `start`, `stop`, `reset`, and the owned `stopwatch`.
+
 ## Data flow while running
 
 1. `start()` records `startTime = clock.now()` and schedules the next tick with `clock.schedule`.

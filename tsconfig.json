@@ -6,6 +6,7 @@
     { "path": "./packages/react" },
     { "path": "./packages/svelte" },
     { "path": "./packages/vue" },
-    { "path": "./packages/solid" }
+    { "path": "./packages/solid" },
+    { "path": "./packages/angular" }
   ]
 }

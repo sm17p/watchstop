@@ -215,8 +215,23 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 
 ### Angular (`@watchstop/angular`) — Wave 2
 
-- Bridge `Store` → Angular **signal** and/or Observable.
-- Unsubscribe / end bridging via `DestroyRef` (or `effect` teardown) — **not** by requiring core to know Angular.
+```ts
+type InjectStopwatchOptions = { clock?: Clock }
+
+type StopwatchBinding = {
+  elapsed: Signal<number>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBinding
+```
+
+- Bridge `Store` → Angular **signal** (writable internally, exposed via `asReadonly`).
+- Must run in an injection context (`inject` / `DestroyRef`).
+- Unsubscribe / end bridging via `DestroyRef` — **not** by requiring core to know Angular.
 - Core must **not** import `@angular/*`.
 - Implication for core: `subscribe` return value must be a plain unsubscribe function (already required).
 
