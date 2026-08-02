@@ -4,6 +4,30 @@ import { injectStopwatch } from '@watchstop/angular'
 @Component({
   selector: 'app-angular-timer',
   standalone: true,
+  host: {
+    class: 'island-face',
+  },
+  styles: `
+    :host {
+      display: grid;
+      gap: var(--space-sm, 0.85rem);
+      width: 100%;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--space-xs, 0.55rem);
+      width: 100%;
+    }
+
+    button {
+      flex: 0 0 auto;
+      width: auto;
+    }
+  `,
   template: `
     <p class="label">angular</p>
     <p class="elapsed">{{ Math.floor(elapsed()) }} ms</p>

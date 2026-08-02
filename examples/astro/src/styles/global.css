@@ -143,11 +143,11 @@ body::before {
   background:
     linear-gradient(160deg, color-mix(in srgb, var(--panel) 92%, #2a241c) 0%, var(--panel) 55%),
     var(--panel);
-  padding: clamp(1.35rem, 2.2vw, 1.85rem);
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  padding: clamp(1.15rem, 1.8vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-md);
-  min-height: clamp(13.5rem, 22vh, 16.5rem);
+  min-height: 0;
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--fg) 5%, transparent) inset,
     0 18px 40px -28px rgb(0 0 0 / 0.75);
@@ -177,22 +177,19 @@ body::before {
 
 .island-face {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: var(--space-md);
-  min-height: 100%;
-  height: 100%;
+  gap: var(--space-sm);
+  width: 100%;
 }
 
 .island app-angular-timer {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: var(--space-md);
-  min-height: 100%;
-  height: 100%;
+  gap: var(--space-sm);
+  width: 100%;
 }
 
 .island .label,
-.island-face .label {
+.island-face .label,
+.island app-angular-timer .label {
   margin: 0;
   font-family: var(--font-ui);
   font-size: 0.72rem;
@@ -203,11 +200,11 @@ body::before {
 }
 
 .island .elapsed,
-.island-face .elapsed {
+.island-face .elapsed,
+.island app-angular-timer .elapsed {
   margin: 0;
-  align-self: end;
   font-family: var(--font-mono);
-  font-size: clamp(2rem, 3.4vw, 2.65rem);
+  font-size: clamp(1.85rem, 3vw, 2.35rem);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -217,16 +214,23 @@ body::before {
 }
 
 .island .controls,
-.island-face .controls {
+.island-face .controls,
+.island app-angular-timer .controls {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
   gap: var(--space-xs);
-  margin-top: var(--space-2xs);
+  width: 100%;
 }
 
 .island button,
-.island-face button {
+.island-face button,
+.island app-angular-timer button {
   appearance: none;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
   border: 1px solid var(--line);
   background: var(--btn);
   color: var(--fg);
@@ -245,19 +249,22 @@ body::before {
 }
 
 .island button:hover,
-.island-face button:hover {
+.island-face button:hover,
+.island app-angular-timer button:hover {
   background: var(--btn-hover);
   border-color: var(--line-strong);
   color: var(--accent);
 }
 
 .island button:active,
-.island-face button:active {
+.island-face button:active,
+.island app-angular-timer button:active {
   transform: translateY(1px);
 }
 
 .island button:focus-visible,
-.island-face button:focus-visible {
+.island-face button:focus-visible,
+.island app-angular-timer button:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
