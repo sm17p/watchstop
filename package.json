@@ -10,8 +10,10 @@
     "test": "mise run test",
     "typecheck": "mise run typecheck",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "changeset publish"
+    "version-packages": "mise run version-packages",
+    "release": "mise run release",
+    "pre:enter": "mise run pre:enter",
+    "pre:exit": "mise run pre:exit"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",

@@ -3,6 +3,7 @@ min_version = "2024.9.5"
 [tools]
 node = "26"
 pnpm = "10.34.4"
+zizmor = "1.28.0"
 
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
@@ -61,5 +62,22 @@ description = "Apply changesets and bump package versions"
 run = "changeset version"
 
 [tasks.release]
-description = "Publish packages to npm via changesets"
-run = "changeset publish"
+description = "Local escape hatch: build then changeset publish (OIDC only works in GHA; needs npm login locally)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+mise run build
+changeset publish
+"""
+
+[tasks."pre:enter"]
+description = "Enter Changesets pre mode for the rc channel"
+run = "changeset pre enter rc"
+
+[tasks."pre:exit"]
+description = "Exit Changesets pre mode"
+run = "changeset pre exit"
+
+[tasks.zizmor]
+description = "Audit GitHub Actions workflows with zizmor"
+run = "zizmor .github/workflows"

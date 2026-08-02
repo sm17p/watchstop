@@ -37,4 +37,10 @@ Vanilla, Preact, and Lit are docs-only guidance (no `@watchstop/preact`, `@watch
 
 ## Changesets
 
-For user-facing package changes, add a changeset with `pnpm changeset` (or `mise run changeset`). Prefer independent versioning; ignore `@watchstop/docs`. Do not run `changeset publish` unless releasing.
+For user-facing package changes, add a changeset with `pnpm changeset` (or `mise run changeset`). Prefer independent versioning; ignore `@watchstop/docs` (never published).
+
+Do **not** run `changeset publish`, `mise run release`, `changeset pre enter`, or `mise run pre:enter` / `pre:exit` unless the user explicitly asks. Version bumps and npm publish are owned by the **Version Packages** PR and `.github/workflows/release.yml` on `main` (OIDC Trusted Publishing; no `NPM_TOKEN`). Prefer squash-merge for Version Packages PRs. Agents must not publish from routine feature PRs. See README for Trusted Publisher setup (`npm trust` CLI primary; website alternate).
+
+## Workflows
+
+Run `mise run zizmor` (or the CI `zizmor` job) before merging workflow changes. Pin third-party Actions to full commit SHAs with a version comment. Do not add pnpm store cache on release `pack` / `publish`.
