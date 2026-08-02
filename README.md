@@ -38,11 +38,27 @@ There is no `NPM_TOKEN` secret. Publishing uses npm [Trusted Publishers](https:/
 
 ### Trusted Publisher setup (manual)
 
-For each publishable package (`@watchstop/core`, adapters, …):
+Human prerequisites (website / interactive; OIDC cannot do these):
 
-1. The package must already exist on npm (first publish of a new name still needs a one-time interactive or token bootstrap; Trusted Publisher settings cannot be created on a missing package).
-2. On npm → package → **Trusted Publisher**: GitHub Actions, repository `sm17p/watchstop`, workflow filename `release.yml` (exact), environment blank unless the workflow adds one. Allow `npm publish`.
-3. Ensure Actions can open PRs: repo Settings → Actions → General → **Allow GitHub Actions to create and approve pull requests**.
+1. Create or claim the npm org **`@watchstop`**.
+2. For each new package name, bootstrap once with `npm publish --access public` so the name exists on the registry (Trusted Publisher cannot be attached to a missing package).
+3. Enable **2FA** on the npm account used for `npm trust`.
+
+Then configure Trusted Publisher for every publishable package. Prefer the **npm CLI** (`npm trust`, requires npm ≥ 11.15; this repo pins Node 26 / npm 11.17 via mise):
+
+```sh
+for pkg in core react svelte vue solid angular qwik alpine; do
+  npm trust github "@watchstop/${pkg}" --file release.yml --repo sm17p/watchstop --allow-publish -y
+done
+
+for pkg in core react svelte vue solid angular qwik alpine; do
+  npm trust list "@watchstop/${pkg}"
+done
+```
+
+Alternate: npm website → package → **Trusted Publisher** → GitHub Actions, repository `sm17p/watchstop`, workflow filename `release.yml` (exact), environment blank unless the workflow adds one, allow `npm publish`.
+
+Also ensure Actions can open Version Packages PRs: repo Settings → Actions → General → **Allow GitHub Actions to create and approve pull requests**.
 
 OIDC authentication only works inside GitHub Actions. Local `mise run release` (build then `changeset publish`) remains an emergency escape hatch and still needs a human `npm login` (or equivalent) if used.
 
