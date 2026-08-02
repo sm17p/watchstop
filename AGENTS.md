@@ -44,3 +44,5 @@ Do **not** run `changeset publish`, `mise run release`, `changeset pre enter`, o
 ## Workflows
 
 Run `mise run zizmor` (or the CI `zizmor` job) before merging workflow changes. Pin third-party Actions to full commit SHAs with a version comment. Do not add pnpm store cache on release `pack` / `publish`.
+
+When writing PR bodies that will be squash-merged to `main`, never include GitHub [workflow-skip markers](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs) (even inside backticks or “we do not use …” prose). Those substrings skip every `push` workflow for that commit. Release also supports `workflow_dispatch` if a push was skipped.
