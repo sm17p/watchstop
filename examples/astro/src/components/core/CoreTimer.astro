@@ -2,8 +2,7 @@
   <p class="label">core</p>
   <p class="elapsed" data-elapsed>0 ms</p>
   <div class="controls">
-    <button type="button" data-start>Start</button>
-    <button type="button" data-stop>Stop</button>
+    <button type="button" data-toggle>Start</button>
     <button type="button" data-reset>Reset</button>
   </div>
 </div>
@@ -13,34 +12,47 @@
 
   const bindCoreTimer = (root: Element) => {
     const elapsedNode = root.querySelector('[data-elapsed]')
-    const startButton = root.querySelector('[data-start]')
-    const stopButton = root.querySelector('[data-stop]')
+    const toggleButton = root.querySelector('[data-toggle]')
     const resetButton = root.querySelector('[data-reset]')
 
     if (
       !(elapsedNode instanceof HTMLElement) ||
-      !(startButton instanceof HTMLButtonElement) ||
-      !(stopButton instanceof HTMLButtonElement) ||
+      !(toggleButton instanceof HTMLButtonElement) ||
       !(resetButton instanceof HTMLButtonElement)
     ) {
       return
     }
 
     const stopwatch = new Stopwatch()
+    let running = false
+
     const paintElapsed = (elapsed: number) => {
       elapsedNode.textContent = `${Math.floor(elapsed)} ms`
     }
 
+    const paintToggle = () => {
+      toggleButton.textContent = running ? 'Stop' : 'Start'
+    }
+
     paintElapsed(stopwatch.get())
+    paintToggle()
     stopwatch.subscribe(paintElapsed)
-    startButton.addEventListener('click', () => {
-      stopwatch.start()
+
+    toggleButton.addEventListener('click', () => {
+      if (running) {
+        stopwatch.stop()
+        running = false
+      } else {
+        stopwatch.start()
+        running = true
+      }
+      paintToggle()
     })
-    stopButton.addEventListener('click', () => {
-      stopwatch.stop()
-    })
+
     resetButton.addEventListener('click', () => {
       stopwatch.reset()
+      running = false
+      paintToggle()
     })
   }
 

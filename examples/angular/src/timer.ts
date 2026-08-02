@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component, signal } from '@angular/core'
 import { injectStopwatch } from '@watchstop/angular'
 
 @Component({
@@ -9,9 +9,10 @@ import { injectStopwatch } from '@watchstop/angular'
       <p class="brand">angular</p>
       <p class="elapsed">{{ Math.floor(elapsed()) }} ms</p>
       <div class="controls">
-        <button type="button" (click)="start()">Start</button>
-        <button type="button" (click)="stop()">Stop</button>
-        <button type="button" (click)="reset()">Reset</button>
+        <button type="button" (click)="toggleRun()">
+          {{ running() ? 'Stop' : 'Start' }}
+        </button>
+        <button type="button" (click)="resetIdle()">Reset</button>
       </div>
     </div>
   `,
@@ -19,8 +20,21 @@ import { injectStopwatch } from '@watchstop/angular'
 export class Timer {
   readonly binding = injectStopwatch()
   readonly elapsed = this.binding.elapsed
-  readonly start = this.binding.start
-  readonly stop = this.binding.stop
-  readonly reset = this.binding.reset
+  readonly running = signal(false)
   readonly Math = Math
+
+  toggleRun(): void {
+    if (this.running()) {
+      this.binding.stop()
+      this.running.set(false)
+      return
+    }
+    this.binding.start()
+    this.running.set(true)
+  }
+
+  resetIdle(): void {
+    this.binding.reset()
+    this.running.set(false)
+  }
 }

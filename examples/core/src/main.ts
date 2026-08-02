@@ -7,6 +7,8 @@ if (!app) {
 }
 
 const stopwatch = new Stopwatch()
+let running = false
+
 const elapsedNode = document.createElement('p')
 elapsedNode.className = 'elapsed'
 elapsedNode.textContent = '0 ms'
@@ -15,18 +17,18 @@ const brand = document.createElement('p')
 brand.className = 'brand'
 brand.textContent = 'core'
 
-const startButton = document.createElement('button')
-startButton.type = 'button'
-startButton.textContent = 'Start'
-startButton.addEventListener('click', () => {
-  stopwatch.start()
-})
-
-const stopButton = document.createElement('button')
-stopButton.type = 'button'
-stopButton.textContent = 'Stop'
-stopButton.addEventListener('click', () => {
-  stopwatch.stop()
+const toggleButton = document.createElement('button')
+toggleButton.type = 'button'
+toggleButton.textContent = 'Start'
+toggleButton.addEventListener('click', () => {
+  if (running) {
+    stopwatch.stop()
+    running = false
+  } else {
+    stopwatch.start()
+    running = true
+  }
+  toggleButton.textContent = running ? 'Stop' : 'Start'
 })
 
 const resetButton = document.createElement('button')
@@ -34,11 +36,13 @@ resetButton.type = 'button'
 resetButton.textContent = 'Reset'
 resetButton.addEventListener('click', () => {
   stopwatch.reset()
+  running = false
+  toggleButton.textContent = 'Start'
 })
 
 const controls = document.createElement('div')
 controls.className = 'controls'
-controls.append(startButton, stopButton, resetButton)
+controls.append(toggleButton, resetButton)
 
 const timer = document.createElement('div')
 timer.className = 'timer'

@@ -10,9 +10,8 @@
       <p class="brand">alpine</p>
       <p class="elapsed" x-text="Math.floor(elapsed) + ' ms'"></p>
       <div class="controls">
-        <button type="button" @click="start()">Start</button>
-        <button type="button" @click="stop()">Stop</button>
-        <button type="button" @click="reset()">Reset</button>
+        <button type="button" @click="toggleRun()" x-text="running ? 'Stop' : 'Start'"></button>
+        <button type="button" @click="resetIdle()">Reset</button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
