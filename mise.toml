@@ -61,7 +61,7 @@ description = "Apply changesets and bump package versions"
 run = "changeset version"
 
 [tasks.release]
-description = "Build then publish packages to npm via changesets"
+description = "Local escape hatch: build then changeset publish (OIDC only works in GHA; needs npm login locally)"
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
