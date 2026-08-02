@@ -1,5 +1,11 @@
 # @watchstop/core
 
+## 0.2.0
+
+### Minor Changes
+
+- f305908: Expose Stopwatch.running and notify subscribers on start so adapters can sync UI state.
+
 ## 0.1.2
 
 ### Patch Changes
