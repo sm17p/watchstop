@@ -6,6 +6,7 @@ Private smoke-test apps for every released `@watchstop/*` package. They use `wor
 
 1. **Individual apps** — one Vite (or framework) app per package under `examples/{core,react,vue,svelte,solid,alpine,angular,qwik}`
 2. **Astro playground** — `examples/astro` mounts one island per package on a single page
+3. **Bench app** — `examples/bench` browser concurrent-stopwatch harness (Playwright; not a framework smoke)
 
 ## Prerequisites
 
@@ -39,9 +40,19 @@ pnpm --filter @watchstop/example-solid dev
 pnpm --filter @watchstop/example-alpine dev
 pnpm --filter @watchstop/example-angular dev
 pnpm --filter @watchstop/example-qwik dev
+pnpm --filter @watchstop/example-bench dev
 ```
 
-Each app shows elapsed milliseconds with Start / Stop / Reset using that package’s public API from the docs.
+Each framework/core app shows elapsed milliseconds with Start / Stop / Reset using that package’s public API from the docs.
+
+Browser bench (MockClock companion; opt-in, not in `mise run test`):
+
+```sh
+mise run bench:browser
+mise run bench:browser:headed
+```
+
+See [`examples/bench/README.md`](./bench/README.md).
 
 ## Notes
 
