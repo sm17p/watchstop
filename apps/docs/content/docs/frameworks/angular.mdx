@@ -79,6 +79,6 @@ Not supported in v1. Each `injectStopwatch()` call constructs and owns its own i
 
 `elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
 
-A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `elapsed` read in the smallest possible component.
+Pass `precisionMs` (for example `1000`) to coarsen notifications toward whole-second updates. `get()` / live reads stay raw milliseconds; framework bindings update on coarsened notifies. Keep the `elapsed` read in a small component when you still want finer UI.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

@@ -8,8 +8,13 @@ description: Elapsed-time Store built on an injectable Clock.
 ## Public API
 
 ```ts
+type StopwatchOptions = {
+  precisionMs?: number
+  visibility?: Visibility | false
+}
+
 class Stopwatch implements Store<number> {
-  constructor(clock?: Clock)
+  constructor(clock?: Clock, options?: StopwatchOptions)
   get running(): boolean
   start(): void
   stop(): void
@@ -20,7 +25,7 @@ class Stopwatch implements Store<number> {
 }
 ```
 
-Export `Stopwatch` from `@watchstop/core`.
+Export `Stopwatch` and `StopwatchOptions` from `@watchstop/core`. Also export `Visibility`, `createMockVisibility`, and `createDocumentVisibility`.
 
 ## Construction
 
@@ -30,11 +35,16 @@ import { Stopwatch, detectClock, createMockClock } from '@watchstop/core'
 const live = new Stopwatch()
 const explicit = new Stopwatch(detectClock())
 const underTest = new Stopwatch(createMockClock())
+const secondsUi = new Stopwatch(createMockClock(), { precisionMs: 1000 })
 ```
 
 - `clock` is optional. When omitted, use `detectClock()`.
+- `precisionMs` (optional, finite `> 0`) coarsens **notifications**: ticks still run at clock cadence, but listeners fire only when `floor(elapsed / precisionMs)` changes, plus on forced control notifies (`start` / `stop` / `reset`). `get()` stays **live** raw milliseconds.
+- `visibility` defaults to document Page Visibility when `document` exists. Pass `false` to disable. Pass `createMockVisibility()` in tests. While `state() === 'hidden'`, scheduling suspends; on return to `visible`, one catch-up notify runs and the loop resumes if still running.
 - Initial elapsed is `0`.
 - Initial state is **stopped** (not running).
+
+Stopwatches that share the **same** `Clock` object share one underlying `schedule` loop (fan-out per tick). Prefer `const clock = createBrowserClock()` (or one mock) passed into each instance when you want coalescing. `detectClock()` / bare `new Stopwatch()` still create a fresh clock per call.
 
 ## Internal model (normative)
 
@@ -112,12 +122,14 @@ While **stopped**, visible elapsed is `accumulated`.
 
 ## Tick loop
 
-While running:
+While running and not visibility-suspended:
 
-1. `handle = clock.schedule(() => onTick())`
-2. `onTick`: if not running or destroyed, return; notify listeners with `get()`; if still running and not destroyed, schedule again. A listener may call `stop` / `reset` / `destroy` during notify — do not re-schedule in that case.
+1. Register with the shared driver for `clock` (one `clock.schedule` per clock identity, not per stopwatch).
+2. On each shared tick: if still running and not suspended, notify listeners with `get()` subject to `precisionMs` coarsening; the driver re-schedules while any registered stopwatch still wants ticks.
 
-Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which — it re-schedules after each callback only while still running and not destroyed.
+Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which.
+
+A listener may call `stop` / `reset` / `destroy` during notify — that instance unregisters and is not re-scheduled.
 
 ## Edge cases
 
@@ -150,9 +162,10 @@ unsubscribe()
 sw.destroy()
 ```
 
-## Out of scope (v1)
+## Out of scope
 
 - Pause vs stop distinctions beyond `stop`
 - Lap times
 - Countdown / Ticker
-- Persistence / workers / multiplayer
+- Persistence / multiplayer
+- Worker clocks / boundary-aligned `Clock.schedule` delay (tracked separately)

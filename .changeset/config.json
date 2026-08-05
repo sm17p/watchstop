@@ -11,6 +11,7 @@
     "@watchstop/docs",
     "@watchstop/examples-astro",
     "@watchstop/example-core",
+    "@watchstop/example-bench",
     "@watchstop/example-react",
     "@watchstop/example-vue",
     "@watchstop/example-svelte",

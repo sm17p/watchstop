@@ -1,6 +1,10 @@
 import { describe, expect, test, vi } from 'vitest'
 
-import { createMockClock, Stopwatch } from './index.js'
+import {
+  createMockClock,
+  createMockVisibility,
+  Stopwatch,
+} from './index.js'
 
 describe('Stopwatch', () => {
   test('reports zero elapsed and ignores time until it is started', () => {
@@ -280,5 +284,63 @@ describe('Stopwatch', () => {
     const stopwatch = new Stopwatch()
     expect(stopwatch.get()).toBe(0)
     stopwatch.destroy()
+  })
+
+  test('coarsens tick notifications to precisionMs boundaries', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock, { precisionMs: 1000 })
+    const listener = vi.fn()
+    stopwatch.subscribe(listener)
+    stopwatch.start()
+    expect(listener).toHaveBeenCalledOnce()
+    listener.mockClear()
+    mockClock.advance(999)
+    expect(listener).not.toHaveBeenCalled()
+    expect(stopwatch.get()).toBe(999)
+    mockClock.advance(1)
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(1000)
+  })
+
+  test('throws when precisionMs is not a finite number greater than zero', () => {
+    expect(() => new Stopwatch(createMockClock(), { precisionMs: 0 })).toThrow()
+    expect(
+      () => new Stopwatch(createMockClock(), { precisionMs: Number.NaN }),
+    ).toThrow()
+  })
+
+  test('shares one clock schedule across stopwatches on the same clock', () => {
+    const mockClock = createMockClock()
+    const schedule = vi.spyOn(mockClock, 'schedule')
+    const first = new Stopwatch(mockClock, { visibility: false })
+    const second = new Stopwatch(mockClock, { visibility: false })
+    first.start()
+    second.start()
+    expect(schedule).toHaveBeenCalledOnce()
+    mockClock.advance(1)
+    expect(schedule).toHaveBeenCalledTimes(2)
+    first.destroy()
+    second.destroy()
+  })
+
+  test('suspends ticks while visibility is hidden and catch-up notifies on visible', () => {
+    const mockClock = createMockClock()
+    const visibility = createMockVisibility()
+    const stopwatch = new Stopwatch(mockClock, { visibility })
+    const listener = vi.fn()
+    stopwatch.subscribe(listener)
+    stopwatch.start()
+    listener.mockClear()
+    visibility.setState('hidden')
+    mockClock.advance(50)
+    expect(listener).not.toHaveBeenCalled()
+    expect(stopwatch.get()).toBe(50)
+    visibility.setState('visible')
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(50)
+    listener.mockClear()
+    mockClock.advance(1)
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(51)
   })
 })

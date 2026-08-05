@@ -54,12 +54,8 @@ TICKS=30 BENCH_LARGE=1 mise run bench
 
 ## How to read shared vs per-instance
 
-Status-quo `Stopwatch` owns its own `schedule` → tick → notify → reschedule loop even when you pass one shared `Clock`. Expect **schedule / cancel / listener counts to stay in the same ballpark** for shared and per-instance at a given N and tick budget. Sharing the clock object alone does not coalesce wakes.
+After the shared clock driver (#11), **shared** mode should show roughly **one** `schedule` per tick wave (`ticks + 1` including start), while **per-instance** stays near **N × (ticks + 1)**. Listener counts still scale with N × ticks because each stopwatch still notifies its own subscribers.
 
-What shared vs per-instance *does* isolate for later #11 work:
-
-- **Shared** is the baseline for “callers already pass one clock” (Axis 3 ownership).
-- **Per-instance** mirrors accidental `detectClock()`-per-`Stopwatch` at scale.
-- After a coalescing shared driver lands, **per-instance `schedules` should land near N× shared** for the same tick budget, while both modes still pay ~N listener / spread work per wave unless notify batching lands too.
+Pass one shared `Clock` into every `Stopwatch` under test for the shared column (`detectClock()` / bare `new Stopwatch()` still allocate a fresh clock each time).
 
 Do not treat `wallMs` as a CI gate; compare relative orders of magnitude on the count columns.
