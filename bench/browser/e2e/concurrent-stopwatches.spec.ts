@@ -447,7 +447,7 @@ async function runBench(
 async function readHiddenProbeViaCdp(
   session: CDPSession,
   startedAtMs: number,
-): Promise<HiddenCdpSample> {
+): Promise<HiddenCdpSample | null> {
   const evaluated = await session.send('Runtime.evaluate', {
     expression: `(() => {
       const api = window.__WATCHSTOP_BENCH__
@@ -463,13 +463,7 @@ async function readHiddenProbeViaCdp(
   })
   const probe = parseHiddenProbe(evaluated.result.value)
   if (probe === null) {
-    return {
-      tMs: Date.now() - startedAtMs,
-      phase: 'idle',
-      visibilityState: 'visible',
-      schedules: null,
-      listeners: null,
-    }
+    return null
   }
   return {
     tMs: Date.now() - startedAtMs,
@@ -488,10 +482,16 @@ async function runHiddenBenchWithCdpSampling(
 
   const sampler = (async () => {
     while (sampling) {
-      samples.push(await readHiddenProbeViaCdp(session, startedAtMs))
+      const sample = await readHiddenProbeViaCdp(session, startedAtMs)
+      if (sample !== null) {
+        samples.push(sample)
+      }
       await delay(HIDDEN_SAMPLE_INTERVAL_MS)
     }
-    samples.push(await readHiddenProbeViaCdp(session, startedAtMs))
+    const finalSample = await readHiddenProbeViaCdp(session, startedAtMs)
+    if (finalSample !== null) {
+      samples.push(finalSample)
+    }
   })()
 
   try {

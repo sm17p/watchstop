@@ -43,6 +43,7 @@ run = """
 #!/usr/bin/env bash
 set -euo pipefail
 mise run build
+pnpm --filter @watchstop/bench-browser exec playwright install chromium
 pnpm --filter @watchstop/bench-browser exec playwright test
 """
 
@@ -52,6 +53,7 @@ run = """
 #!/usr/bin/env bash
 set -euo pipefail
 mise run build
+pnpm --filter @watchstop/bench-browser exec playwright install chromium
 BENCH_HEADED=1 pnpm --filter @watchstop/bench-browser exec playwright test --headed
 """
 

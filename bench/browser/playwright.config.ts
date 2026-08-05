@@ -46,7 +46,7 @@ export default defineConfig({
   webServer: {
     command: `pnpm run build && pnpm exec vite preview --host 127.0.0.1 --port ${port}`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 })
