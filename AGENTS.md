@@ -43,6 +43,6 @@ Do **not** run `changeset publish`, `mise run release`, `changeset pre enter`, o
 
 Run `mise run zizmor` (or the CI `zizmor` job) before merging workflow changes. Pin third-party Actions to full commit SHAs with a version comment. Do not add pnpm store cache on release `pack` / `publish`.
 
-OSV-Scanner gates dependency vulns: PR/`merge_group` delta scan and weekly + push-to-`main` full scan share [`.github/workflows/osv-scanner.yml`](.github/workflows/osv-scanner.yml) so Code Scanning keeps one config id. Release **publish** still runs a full scan (`osv-scan` in `release.yml` before `pack`/`publish`, `upload-sarif: false`) and does not block the Version Packages job.
+OSV-Scanner gates dependency vulns: PR/`merge_group` delta scan and weekly full scan share [`.github/workflows/osv-scanner.yml`](.github/workflows/osv-scanner.yml) so Code Scanning keeps one config id. Release **publish** runs a full scan (`osv-scan` in `release.yml` before `pack`/`publish`, `upload-sarif: false`) and does not block the Version Packages job.
 
 When writing PR bodies that will be squash-merged to `main`, never include GitHub [workflow-skip markers](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs) (even inside backticks or “we do not use …” prose). Those substrings skip every `push` workflow for that commit. Release also supports `workflow_dispatch` if a push was skipped.

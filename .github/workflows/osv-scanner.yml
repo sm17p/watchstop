@@ -7,8 +7,6 @@ on:
     branches: [main]
   schedule:
     - cron: "30 12 * * 1"
-  push:
-    branches: [main]
 
 permissions: {}
 
@@ -23,8 +21,8 @@ jobs:
     with:
       fail-on-vuln: true
 
-  scan-scheduled:
-    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+  scan-full:
+    if: ${{ github.event_name == 'schedule' }}
     permissions:
       actions: read
       contents: read
