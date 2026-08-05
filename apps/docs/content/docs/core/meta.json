@@ -3,6 +3,7 @@
   "pages": [
     "clock",
     "store",
-    "stopwatch"
+    "stopwatch",
+    "options"
   ]
 }

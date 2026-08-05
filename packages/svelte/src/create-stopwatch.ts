@@ -6,6 +6,7 @@ import { toSvelteStore } from './to-svelte-store.js'
 
 export type CreateStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 export type StopwatchStore = Readable<number> & {
@@ -19,7 +20,9 @@ export type StopwatchStore = Readable<number> & {
 export function createStopwatch(
   options?: CreateStopwatchOptions,
 ): StopwatchStore {
-  const stopwatch = new Stopwatch(options?.clock)
+  const stopwatch = new Stopwatch(options?.clock, {
+    precisionMs: options?.precisionMs,
+  })
   const { subscribe } = toSvelteStore(stopwatch)
   const running: Readable<boolean> = {
     subscribe(listener: Subscriber<boolean>): Unsubscriber {

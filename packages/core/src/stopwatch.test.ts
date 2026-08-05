@@ -281,4 +281,29 @@ describe('Stopwatch', () => {
     expect(stopwatch.get()).toBe(0)
     stopwatch.destroy()
   })
+
+  test('coarsens tick notifications to precisionMs boundaries', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock, { precisionMs: 1000 })
+    const listener = vi.fn()
+    stopwatch.subscribe(listener)
+    stopwatch.start()
+    expect(listener).toHaveBeenCalledOnce()
+    listener.mockClear()
+    mockClock.advance(999)
+    expect(listener).not.toHaveBeenCalled()
+    expect(stopwatch.get()).toBe(999)
+    mockClock.advance(1)
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenLastCalledWith(1000)
+  })
+
+  test('throws when precisionMs is not a finite number greater than zero', () => {
+    expect(() => new Stopwatch(createMockClock(), { precisionMs: 0 })).toThrow(
+      RangeError,
+    )
+    expect(
+      () => new Stopwatch(createMockClock(), { precisionMs: Number.NaN }),
+    ).toThrow(RangeError)
+  })
 })

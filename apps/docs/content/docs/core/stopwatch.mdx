@@ -8,8 +8,12 @@ description: Elapsed-time Store built on an injectable Clock.
 ## Public API
 
 ```ts
+type StopwatchOptions = {
+  precisionMs?: number
+}
+
 class Stopwatch implements Store<number> {
-  constructor(clock?: Clock)
+  constructor(clock?: Clock, options?: StopwatchOptions)
   get running(): boolean
   start(): void
   stop(): void
@@ -20,7 +24,7 @@ class Stopwatch implements Store<number> {
 }
 ```
 
-Export `Stopwatch` from `@watchstop/core`.
+Export `Stopwatch` and `StopwatchOptions` from `@watchstop/core`.
 
 ## Construction
 
@@ -30,9 +34,11 @@ import { Stopwatch, detectClock, createMockClock } from '@watchstop/core'
 const live = new Stopwatch()
 const explicit = new Stopwatch(detectClock())
 const underTest = new Stopwatch(createMockClock())
+const secondsUi = new Stopwatch(createMockClock(), { precisionMs: 1000 })
 ```
 
 - `clock` is optional. When omitted, use `detectClock()`.
+- `options` (`StopwatchOptions`) is optional. See [Options](/docs/core/options) for `precisionMs` (omit vs set, validation, and when to use it).
 - Initial elapsed is `0`.
 - Initial state is **stopped** (not running).
 
@@ -115,7 +121,7 @@ While **stopped**, visible elapsed is `accumulated`.
 While running:
 
 1. `handle = clock.schedule(() => onTick())`
-2. `onTick`: if not running or destroyed, return; notify listeners with `get()`; if still running and not destroyed, schedule again. A listener may call `stop` / `reset` / `destroy` during notify — do not re-schedule in that case.
+2. `onTick`: if not running or destroyed, return; notify listeners with `get()` subject to `precisionMs` coarsening; if still running and not destroyed, schedule again. A listener may call `stop` / `reset` / `destroy` during notify — do not re-schedule in that case.
 
 Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which — it re-schedules after each callback only while still running and not destroyed.
 

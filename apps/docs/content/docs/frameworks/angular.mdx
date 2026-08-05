@@ -12,6 +12,7 @@ Wave 2 adapter bridging `Store` into an Angular signal, cleaned up with `Destroy
 ```ts
 type InjectStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 type StopwatchBinding = {
@@ -62,6 +63,7 @@ export class Timer {
 | Option | Type | Purpose |
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
 
 ## Sharing one stopwatch across components
 
@@ -77,8 +79,6 @@ Not supported in v1. Each `injectStopwatch()` call constructs and owns its own i
 
 ## Re-render cost
 
-`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
-
-A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `elapsed` read in the smallest possible component.
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Pass `precisionMs` to coarsen notifies — see [Options](/docs/core/options). Keep the `elapsed` read in a small component when you still want finer UI.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

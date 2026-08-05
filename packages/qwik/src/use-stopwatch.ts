@@ -12,6 +12,7 @@ import {
 
 export type UseStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 export type StopwatchBinding = {
@@ -26,7 +27,9 @@ export type StopwatchBinding = {
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   const instance = useSignal<NoSerialize<Stopwatch>>()
   if (instance.value === undefined) {
-    instance.value = noSerialize(new Stopwatch(options?.clock))
+    instance.value = noSerialize(
+      new Stopwatch(options?.clock, { precisionMs: options?.precisionMs }),
+    )
   }
 
   const ownedStopwatch = instance.value
