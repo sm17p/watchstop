@@ -16,7 +16,7 @@ Machine indexes: [`/llms.txt`](/llms.txt), [`/llms-full.txt`](/llms-full.txt).
 3. Implement `Stopwatch`.
 4. Export public API from package entry exactly as named below. **Also** add a `packages/core` tsconfig and register it in the root `tsconfig.json` `references` array (root refs are empty today; `pnpm typecheck` / `tsgo -b` needs the project reference). Public APIs need **explicit return types** because `tsconfig.base.json` sets `isolatedDeclarations: true`.
 5. Typecheck with **TS7 (`tsgo`)**; `pnpm test` + `pnpm build` green. Dev dependency `@typescript/native-preview` is pinned in root `package.json` (not `latest`).
-6. Only then Wave 1 / Wave 2 adapters.
+6. Only then framework adapters.
 
 ## Exact public names
 
@@ -112,9 +112,9 @@ Normative `StopwatchOptions` behavior is on [Options](/docs/core/options).
 
 Adapters must stay thin: **only** construct a `Stopwatch` and bridge `get` / `subscribe` / `destroy` (plus exposing `start`/`stop`/`reset` if the adapter’s API includes controls). No clocks or elapsed math in adapters. Owning an instance and its teardown is allowed; reimplementing timing is not.
 
-### Exact public names (Wave 1)
+### Exact public names (adapters)
 
-Every Wave 1 adapter ships exactly **one** entry point: the instance-owning binding, plus its option and return types. A component either owns its stopwatch or does not use the adapter.
+Every adapter ships exactly **one** entry point: the instance-owning binding, plus its option and return types. A component either owns its stopwatch or does not use the adapter.
 
 The generic `Store<T>` bridge each adapter uses internally is **not** public API. `Stopwatch` is the only `Store` in core today, so exporting a primitive over the type family would fix a shared-instance API before there is a second store to validate it against. Deferred to [issue #6](https://github.com/sm17p/watchstop/issues/6) and revisited when `Countdown` / `Ticker` land; adding an export later is not a breaking change.
 
@@ -195,12 +195,12 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 - Expose the owned instance as `stopwatch` for callers who need to pass it elsewhere.
 - The options are `clock` and `precisionMs` (forwarded to `Stopwatch`). See [Options](/docs/core/options) for normative `StopwatchOptions` behavior.
 
-### Packaging (Wave 1 adapters)
+### Packaging (adapters)
 
 - `@watchstop/core` is a **peer dependency**, not a regular dependency, plus a dev dependency so tests resolve it. Adapters import `Stopwatch` as a value, but the consumer must already own core to construct or share instances, and a regular dependency invites a second resolved copy whose `Store` type is not identical to the consumer's.
 - Framework packages stay peer dependencies as before.
 
-### React (`@watchstop/react`) — Wave 1
+### React (`@watchstop/react`)
 
 - Bind with `useSyncExternalStore`.
 - **MUST NOT** pass live `store.get` / `stopwatch.get` as `getSnapshot`. Cache the value from `subscribe` (or a versioned snapshot updated only in the listener); `getSnapshot` returns that cached snapshot so it is stable between notifications.
@@ -208,25 +208,25 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 - SSR: initial / server snapshot may use one `get()`; must be safe without `window`.
 - `useStopwatch` creates the instance with a lazy `useRef` and destroys it in a `useEffect` cleanup — **not** `useMemo`, which React may discard. Strict Mode double-invoke must rebuild and republish the instance rather than leave a destroyed or orphaned stopwatch.
 
-### Svelte (`@watchstop/svelte`) — Wave 1
+### Svelte (`@watchstop/svelte`)
 
 - Expose a readable-store shape (`subscribe` compatible with `$store` auto-subscription).
 - May wrap `Stopwatch` or implement the readable contract by delegating to `subscribe`/`get`.
 - `subscribe` must call the listener synchronously with `get()` before registering it, per Svelte's readable contract.
 - `createStopwatch` ties `destroy()` to `onDestroy`, **not** to last-unsubscribe: a store may be subscribed and unsubscribed repeatedly, and a stopwatch may legitimately run with zero subscribers. Outside component initialisation it registers no teardown and the caller owns `destroy()`.
 
-### Vue (`@watchstop/vue`) — Wave 1
+### Vue (`@watchstop/vue`)
 
 - Composable returns a `ref` (or shallow ref) updated from `subscribe`, cleaned up with `onScopeDispose`.
 - Initial `ref` value from `get()`.
 - `useStopwatch` registers a second `onScopeDispose` for `destroy()`, after the unsubscribe.
 
-### Solid (`@watchstop/solid`) — Wave 1
+### Solid (`@watchstop/solid`)
 
 - Create a signal from `get()`; update in `subscribe`; `onCleanup` unsubscribes.
 - `useStopwatch` registers a second `onCleanup` for `destroy()`, after the unsubscribe.
 
-### Angular (`@watchstop/angular`) — Wave 2
+### Angular (`@watchstop/angular`)
 
 ```ts
 type InjectStopwatchOptions = { clock?: Clock; precisionMs?: number }
@@ -249,7 +249,7 @@ declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBin
 - Core must **not** import `@angular/*`.
 - Implication for core: `subscribe` return value must be a plain unsubscribe function (already required).
 
-### Qwik (`@watchstop/qwik`) — Wave 2
+### Qwik (`@watchstop/qwik`)
 
 ```ts
 type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
@@ -274,7 +274,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 - Implication for core: `Stopwatch` instances are client-owned; core holds no framework callbacks beyond user listeners.
 - Package as a [Qwik library](https://qwik.dev/docs/advanced/library/) (`vite build --mode lib`, `"qwik"` field, `index.qwik.mjs`).
 
-### Alpine (`@watchstop/alpine`) — Wave 2
+### Alpine (`@watchstop/alpine`)
 
 ```ts
 type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
@@ -299,18 +299,10 @@ declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBin
 - `destroy` unsubscribes and destroys; Alpine invokes it on element removal.
 - Implication for core: destroy/unsubscribe paths must be idempotent (already required).
 
-### Docs-only (no package in v1)
-
-Vanilla, Preact, and Lit are **docs-only** — there is no `@watchstop/vanilla`, `@watchstop/preact`, or `@watchstop/lit` package.
-
-- **Vanilla:** use `Stopwatch` + DOM updates in `subscribe`.
-- **Preact:** prefer `@watchstop/react` when compat allows, or core directly.
-- **Lit:** subscribe in `connectedCallback`, unsubscribe in `disconnectedCallback`.
-
-## If Store is insufficient for Wave 2
+## If Store is insufficient for an adapter
 
 Change **core** + these docs + core tests first. Do not special-case timing or subscription semantics inside a single adapter.
 
 ## Framework docs
 
-Framework pages under `/docs/frameworks/*` stay stubs until the matching package ships (Step 7), except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Wave 1 has shipped, so [React](/docs/frameworks/react), [Svelte](/docs/frameworks/svelte), [Vue](/docs/frameworks/vue), and [Solid](/docs/frameworks/solid) document their real API. Agents implementing Wave 2 adapters should still follow the constraints above.
+Framework pages under `/docs/frameworks/*` document the matching package once it ships, except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Follow the constraints above when implementing or updating adapters.
