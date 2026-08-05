@@ -78,7 +78,7 @@ On push to `main` (or manual **Run workflow**), [`.github/workflows/release.yml`
 1. If pending changesets exist, the **version** job opens or updates a **Version Packages** PR (`changeset version`: bumps versions, writes changelogs, consumes changesets). Prefer **squash-merge** for that PR so `main` gets a single `Version Packages` commit. OSV-Scanner does not block this path.
 2. When that PR is merged and there are no remaining changesets, **osv-scan** runs a full [OSV-Scanner](https://google.github.io/osv-scanner/github-action/) pass, then **pack** builds (`mise run build`) and packs tarballs, and **publish** uploads to npm via OIDC, creates git tags, and opens GitHub Releases.
 
-PR and merge-group delta scans live in [`.github/workflows/osv-scanner-pr.yml`](./.github/workflows/osv-scanner-pr.yml); weekly and push-to-`main` full scans (SARIF → Security → Code scanning) in [`.github/workflows/osv-scanner.yml`](./.github/workflows/osv-scanner.yml).
+PR/`merge_group` delta scans and weekly + push-to-`main` full scans live in [`.github/workflows/osv-scanner.yml`](./.github/workflows/osv-scanner.yml) (SARIF → Security → Code scanning). The release publish path runs the same scanner with `fail-on-vuln` and does not upload SARIF, so it does not register a second Code Scanning config.
 
 There is no `NPM_TOKEN` secret. Publishing uses npm [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (GitHub Actions OIDC). `id-token: write` is granted only on the publish job.
 
