@@ -2,9 +2,11 @@
 
 Private smoke-test apps for every released `@watchstop/*` package. They use `workspace:*` and import built `packages/*/dist` — run `mise run build` first.
 
+Benchmark harnesses live under [`../bench`](../bench/README.md), not here.
+
 ## Tracks
 
-1. **Individual apps** — one Vite (or framework) app per package under `examples/{core,react,vue,svelte,solid,alpine,angular,qwik}`
+1. **Individual apps** — one Vite (or framework) app per package under `examples/{alpine,angular,astro,core,qwik,react,solid,svelte,vue}`
 2. **Astro playground** — `examples/astro` mounts one island per package on a single page
 
 ## Prerequisites
@@ -31,17 +33,17 @@ mise run examples:build
 ## Individual apps
 
 ```sh
-pnpm --filter @watchstop/example-core dev
-pnpm --filter @watchstop/example-react dev
-pnpm --filter @watchstop/example-vue dev
-pnpm --filter @watchstop/example-svelte dev
-pnpm --filter @watchstop/example-solid dev
 pnpm --filter @watchstop/example-alpine dev
 pnpm --filter @watchstop/example-angular dev
+pnpm --filter @watchstop/example-core dev
 pnpm --filter @watchstop/example-qwik dev
+pnpm --filter @watchstop/example-react dev
+pnpm --filter @watchstop/example-solid dev
+pnpm --filter @watchstop/example-svelte dev
+pnpm --filter @watchstop/example-vue dev
 ```
 
-Each app shows elapsed milliseconds with Start / Stop / Reset using that package’s public API from the docs.
+Each framework/core app shows elapsed milliseconds with Start / Stop / Reset using that package’s public API from the docs.
 
 ## Notes
 

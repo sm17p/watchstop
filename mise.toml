@@ -33,6 +33,30 @@ else
 fi
 """
 
+[tasks.bench]
+description = "Run core MockClock concurrent-stopwatch microbench (opt-in; not in test/CI)"
+run = "vitest run --config bench/core/vitest.config.ts"
+
+[tasks."bench:browser"]
+description = "Browser concurrent-stopwatch bench (headless Chromium; foreground only, soft-skips hidden)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+mise run build
+pnpm --filter @watchstop/bench-browser exec playwright install chromium
+pnpm --filter @watchstop/bench-browser exec playwright test
+"""
+
+[tasks."bench:browser:headed"]
+description = "Browser concurrent-stopwatch bench (headed Chromium; foreground + CDP-sampled hidden)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+mise run build
+pnpm --filter @watchstop/bench-browser exec playwright install chromium
+BENCH_HEADED=1 pnpm --filter @watchstop/bench-browser exec playwright test --headed
+"""
+
 [tasks.typecheck]
 description = "Typecheck the workspace with tsgo"
 run = "tsgo -b"

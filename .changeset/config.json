@@ -8,15 +8,16 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
+    "@watchstop/bench-browser",
     "@watchstop/docs",
-    "@watchstop/examples-astro",
-    "@watchstop/example-core",
-    "@watchstop/example-react",
-    "@watchstop/example-vue",
-    "@watchstop/example-svelte",
-    "@watchstop/example-solid",
     "@watchstop/example-alpine",
     "@watchstop/example-angular",
-    "@watchstop/example-qwik"
+    "@watchstop/example-core",
+    "@watchstop/example-qwik",
+    "@watchstop/example-react",
+    "@watchstop/example-solid",
+    "@watchstop/example-svelte",
+    "@watchstop/example-vue",
+    "@watchstop/examples-astro"
   ]
 }
