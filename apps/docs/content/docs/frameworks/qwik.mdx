@@ -16,6 +16,7 @@ The owned `Stopwatch` is held with [`noSerialize()`](https://qwik.dev/docs/advan
 ```ts
 type UseStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 type StopwatchBinding = {
@@ -63,6 +64,7 @@ export const Timer = component$(() => {
 | Option | Type | Purpose |
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Coarsen notify cadence (finite `> 0`). |
 
 ## Sharing one stopwatch across components
 
@@ -76,6 +78,6 @@ Not supported in v1. Each `useStopwatch()` call constructs and owns its own inst
 
 ## Re-render cost
 
-`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Keep the `elapsed` read in the smallest possible component.
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Pass `precisionMs` (for example `1000`) to coarsen notifications toward whole-second updates. Keep the `elapsed` read in the smallest possible component when you still want finer UI.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

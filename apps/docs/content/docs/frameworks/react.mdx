@@ -12,6 +12,7 @@ Wave 1 adapter over `Store` via `useSyncExternalStore`. `@watchstop/core` is a p
 ```ts
 type UseStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 type StopwatchBinding = {
@@ -56,8 +57,9 @@ export function Timer() {
 | Option | Type | Purpose |
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Coarsen notify cadence (finite `> 0`). |
 
-Passing a different `clock` destroys the current instance and builds a fresh one.
+Passing a different `clock` or `precisionMs` destroys the current instance and builds a fresh one.
 
 ### Strict Mode
 
@@ -73,7 +75,7 @@ Not supported in v1. Each `useStopwatch()` call constructs and owns its own inst
 
 `elapsed` is raw milliseconds delivered at the clock's tick cadence, so a component reading it re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
 
-A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, render `elapsed` in the smallest possible component so the frame-rate re-render does not cascade through a subtree.
+Pass `precisionMs` (for example `1000`) to coarsen notifications toward whole-second updates. `get()` stays raw; `elapsed` updates on coarsened notifies. Keep `elapsed` in the smallest possible component when you still want finer UI.
 
 ## `useSyncExternalStore` (normative)
 

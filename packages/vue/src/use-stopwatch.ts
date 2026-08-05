@@ -5,6 +5,7 @@ import { useStore } from './use-store.js'
 
 export type UseStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 export type StopwatchBinding = {
@@ -17,7 +18,9 @@ export type StopwatchBinding = {
 }
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock)
+  const stopwatch = new Stopwatch(options?.clock, {
+    precisionMs: options?.precisionMs,
+  })
   const elapsed = useStore(stopwatch)
   const running = shallowRef(stopwatch.running)
   const unsubscribeRunning = stopwatch.subscribe(() => {

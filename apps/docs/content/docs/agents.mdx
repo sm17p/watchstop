@@ -45,7 +45,7 @@ type TimerClockOptions = {
 }
 
 declare class Stopwatch implements Store<number> {
-  constructor(clock?: Clock)
+  constructor(clock?: Clock, options?: StopwatchOptions)
   get running(): boolean
   start(): void
   stop(): void
@@ -53,6 +53,10 @@ declare class Stopwatch implements Store<number> {
   get(): number
   subscribe(listener: (elapsed: number) => void): () => void
   destroy(): void
+}
+
+type StopwatchOptions = {
+  precisionMs?: number
 }
 
 declare function createBrowserClock(): Clock
@@ -93,6 +97,7 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 - [ ] Notify reentrancy: newly added listeners miss the current wave; removed listeners are not called again in that wave; `start`/`stop`/`reset`/`destroy` from a listener are allowed; `destroy` clears listeners so remaining cleared listeners in the wave are skipped.
 - [ ] `destroy` stops ticks, clears listeners, freezes `get()`, ignores later `start`/`stop`/`reset`.
 - [ ] `subscribe` after `destroy` does not retain listeners.
+- [ ] `precisionMs` coarsens tick notifies to bucket changes; `get()` stays live; control paths force-notify.
 
 ### Packaging
 
@@ -114,7 +119,7 @@ The generic `Store<T>` bridge each adapter uses internally is **not** public API
 `@watchstop/react`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchBinding = {
   elapsed: number
@@ -131,7 +136,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/vue`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchBinding = {
   elapsed: Readonly<ShallowRef<number>>
@@ -148,7 +153,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/solid`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchBinding = {
   elapsed: Accessor<number>
@@ -165,7 +170,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/svelte`:
 
 ```ts
-type CreateStopwatchOptions = { clock?: Clock }
+type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchStore = Readable<number> & {
   running: Readable<boolean>
@@ -186,7 +191,7 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 - **Teardown is mandatory.** `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
 - **Control identities are stable** for the life of the owner, so they are safe in dependency arrays and as event handlers.
 - Expose the owned instance as `stopwatch` for callers who need to pass it elsewhere.
-- The only option is `clock`. A `precision`-style option that coarsens notifications is out of scope for Wave 1 and will follow separately.
+- The options are `clock` and `precisionMs` (forwarded to `Stopwatch`).
 
 ### Packaging (Wave 1 adapters)
 
@@ -222,7 +227,7 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 ### Angular (`@watchstop/angular`) — Wave 2
 
 ```ts
-type InjectStopwatchOptions = { clock?: Clock }
+type InjectStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -245,7 +250,7 @@ declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBin
 ### Qwik (`@watchstop/qwik`) — Wave 2
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -270,7 +275,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 ### Alpine (`@watchstop/alpine`) — Wave 2
 
 ```ts
-type CreateStopwatchOptions = { clock?: Clock }
+type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
 
 type StopwatchBinding = {
   elapsed: number

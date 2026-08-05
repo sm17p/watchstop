@@ -12,6 +12,7 @@ Wave 1 adapter exposing `Store` as a Svelte readable store so `$` auto-subscript
 ```ts
 type CreateStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 type StopwatchStore = Readable<number> & {
@@ -56,6 +57,7 @@ It is named `createStopwatch`, not `fromStore` or `toStore`. `svelte/store` alre
 | Option | Type | Purpose |
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Coarsen notify cadence (finite `> 0`). |
 
 ### Teardown is tied to the component, not to subscriber count
 
@@ -81,6 +83,6 @@ Not supported in v1. Each `createStopwatch()` call constructs and owns its own i
 
 `$stopwatch` is raw milliseconds delivered at the clock's tick cadence, so the markup reading it updates roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
 
-A `precision`-style option that coarsens notifications is deliberately out of scope for this change and will follow separately. Until then, keep the `$stopwatch` read in the smallest possible component.
+Pass `precisionMs` (for example `1000`) to coarsen notifications toward whole-second updates. `get()` stays raw; `$stopwatch` updates on coarsened notifies. Keep the `$stopwatch` read in a small component when you still want finer UI.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).
