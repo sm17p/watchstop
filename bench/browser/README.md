@@ -1,6 +1,6 @@
 # Browser concurrent-stopwatch bench
 
-Layer 2 for issue #8: real `createBrowserClock` / rAF timing, long tasks, frame percentiles, and **headed** hidden-tab behavior. Complements the MockClock microbench (`mise run bench` / [`packages/core/bench`](../../packages/core/bench/README.md)).
+Layer 2 for issue #8: real `createBrowserClock` / rAF timing, long tasks, frame percentiles, and **headed** hidden-tab behavior. Complements the MockClock microbench (`mise run bench` / [`../core`](../core/README.md)).
 
 Not part of `mise run test` or CI unit jobs. No absolute performance budgets.
 
@@ -10,7 +10,7 @@ Not part of `mise run test` or CI unit jobs. No absolute performance budgets.
 mise install
 pnpm install
 mise run build
-pnpm --filter @watchstop/example-bench exec playwright install chromium
+pnpm --filter @watchstop/bench-browser exec playwright install chromium
 ```
 
 For system Chrome (`BENCH_BROWSER_CHANNEL=chrome`), install Google Chrome locally (no Playwright browser download required for that channel).
@@ -18,7 +18,7 @@ For system Chrome (`BENCH_BROWSER_CHANNEL=chrome`), install Google Chrome locall
 ## Manual (Vite UI)
 
 ```bash
-pnpm --filter @watchstop/example-bench dev
+pnpm --filter @watchstop/bench-browser dev
 ```
 
 Open the app, pick **N** / **mode** / window ms, click **Run**. Results render in `#bench-results` and on `window.__WATCHSTOP_BENCH__`.

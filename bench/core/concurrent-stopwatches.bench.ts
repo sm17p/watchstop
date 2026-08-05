@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { Stopwatch } from '../src/stopwatch.js'
+import { Stopwatch } from '@watchstop/core'
 import {
   createCountingMockClock,
   type CountingMockClock,

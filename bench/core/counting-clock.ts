@@ -1,9 +1,9 @@
-import type { Clock } from '../src/clock.js'
-import {
-  createMockClock,
-  type MockClock,
-  type MockClockOptions,
-} from '../src/create-mock-clock.js'
+import type {
+  Clock,
+  MockClock,
+  MockClockOptions,
+} from '@watchstop/core'
+import { createMockClock } from '@watchstop/core'
 
 export type ClockCounts = {
   schedule: number

@@ -1,5 +1,5 @@
 {
-  "name": "@watchstop/example-bench",
+  "name": "@watchstop/bench-browser",
   "private": true,
   "type": "module",
   "scripts": {

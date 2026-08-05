@@ -35,7 +35,7 @@ fi
 
 [tasks.bench]
 description = "Run core MockClock concurrent-stopwatch microbench (opt-in; not in test/CI)"
-run = "vitest run --config packages/core/vitest.bench.config.ts"
+run = "vitest run --config bench/core/vitest.config.ts"
 
 [tasks."bench:browser"]
 description = "Browser concurrent-stopwatch bench (headless Chromium; foreground only, soft-skips hidden)"
@@ -43,7 +43,7 @@ run = """
 #!/usr/bin/env bash
 set -euo pipefail
 mise run build
-pnpm --filter @watchstop/example-bench exec playwright test
+pnpm --filter @watchstop/bench-browser exec playwright test
 """
 
 [tasks."bench:browser:headed"]
@@ -52,7 +52,7 @@ run = """
 #!/usr/bin/env bash
 set -euo pipefail
 mise run build
-BENCH_HEADED=1 pnpm --filter @watchstop/example-bench exec playwright test --headed
+BENCH_HEADED=1 pnpm --filter @watchstop/bench-browser exec playwright test --headed
 """
 
 [tasks.typecheck]

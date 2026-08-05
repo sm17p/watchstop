@@ -92,6 +92,22 @@ importers:
         specifier: ^4.115.0
         version: 4.115.0(@types/node@26.1.2)
 
+  bench/browser:
+    dependencies:
+      '@watchstop/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.62.1
+        version: 1.62.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^8.2.0
+        version: 8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.101.0)(yaml@2.9.0)
+
   examples/alpine:
     dependencies:
       '@watchstop/alpine':
@@ -264,22 +280,6 @@ importers:
         version: 6.0.3
       vite:
         specifier: ^8.0.13
-        version: 8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.101.0)(yaml@2.9.0)
-
-  examples/bench:
-    dependencies:
-      '@watchstop/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-    devDependencies:
-      '@playwright/test':
-        specifier: ^1.62.1
-        version: 1.62.1
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vite:
-        specifier: ^8.2.0
         version: 8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.101.0)(yaml@2.9.0)
 
   examples/core:
