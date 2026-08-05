@@ -1,5 +1,16 @@
 # @watchstop/vue
 
+## 1.2.0
+
+### Minor Changes
+
+- f21eb27: Add Stopwatch `precisionMs` notification coarsening. Adapters forward `precisionMs` to the owned Stopwatch.
+
+### Patch Changes
+
+- Updated dependencies [f21eb27]
+  - @watchstop/core@0.3.0
+
 ## 1.1.0
 
 ### Minor Changes
