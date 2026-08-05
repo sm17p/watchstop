@@ -16,23 +16,21 @@ Core documentation under `apps/docs/content/docs` is the **source of truth**.
 | Package | Role |
 | --- | --- |
 | `@watchstop/core` | Clock + Store + Stopwatch + runtime clocks (ships first) |
-| `@watchstop/react` | Wave 1 adapter |
-| `@watchstop/svelte` | Wave 1 adapter |
-| `@watchstop/vue` | Wave 1 adapter |
-| `@watchstop/solid` | Wave 1 adapter |
-| `@watchstop/angular` | Wave 2 adapter |
-| `@watchstop/qwik` | Wave 2 adapter |
-| `@watchstop/alpine` | Wave 2 adapter |
+| `@watchstop/react` | adapter |
+| `@watchstop/svelte` | adapter |
+| `@watchstop/vue` | adapter |
+| `@watchstop/solid` | adapter |
+| `@watchstop/angular` | adapter |
+| `@watchstop/qwik` | adapter |
+| `@watchstop/alpine` | adapter |
 
 No timing logic in adapters — only `get` / `subscribe` bridges.
-
-Vanilla, Preact, and Lit are docs-only guidance (no `@watchstop/preact`, `@watchstop/vanilla`, or `@watchstop/lit` package).
 
 ## Workflow
 
 1. Read `/docs/architecture`, `/docs/core/*`, `/docs/runtimes/*`, `/docs/agents`
 2. Implement `@watchstop/core` + Vitest until green
-3. Then Wave 1 adapters, then Wave 2
+3. Then adapters
 4. Fill framework docs only after code ships
 
 ## Changesets

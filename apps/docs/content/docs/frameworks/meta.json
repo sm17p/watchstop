@@ -8,8 +8,6 @@
     "angular",
     "qwik",
     "alpine",
-    "vanilla",
-    "preact",
-    "lit"
+    "vanilla"
   ]
 }
