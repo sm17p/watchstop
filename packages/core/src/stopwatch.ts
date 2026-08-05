@@ -24,7 +24,7 @@ export class Stopwatch implements Store<number> {
     const precisionMs = options?.precisionMs
     if (precisionMs !== undefined) {
       if (!Number.isFinite(precisionMs) || precisionMs <= 0) {
-        throw new Error('precisionMs must be a finite number > 0')
+        throw new RangeError('precisionMs must be a finite number > 0')
       }
       this.#precisionMs = precisionMs
     }

@@ -299,9 +299,11 @@ describe('Stopwatch', () => {
   })
 
   test('throws when precisionMs is not a finite number greater than zero', () => {
-    expect(() => new Stopwatch(createMockClock(), { precisionMs: 0 })).toThrow()
+    expect(() => new Stopwatch(createMockClock(), { precisionMs: 0 })).toThrow(
+      RangeError,
+    )
     expect(
       () => new Stopwatch(createMockClock(), { precisionMs: Number.NaN }),
-    ).toThrow()
+    ).toThrow(RangeError)
   })
 })
