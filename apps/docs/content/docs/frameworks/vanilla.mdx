@@ -3,4 +3,33 @@ title: Vanilla
 description: Use core directly in the browser.
 ---
 
-Docs after core ships. Docs-only — no dedicated package.
+Use `@watchstop/core` without a framework adapter.
+
+```ts
+import { Stopwatch, createBrowserClock } from '@watchstop/core'
+
+const clock = createBrowserClock()
+const sw = new Stopwatch(clock, { precisionMs: 1000 })
+const elapsedNode = document.querySelector('#elapsed')
+
+const unsubscribe = sw.subscribe((elapsed) => {
+  if (elapsedNode) {
+    elapsedNode.textContent = (elapsed / 1000).toFixed(0)
+  }
+})
+
+document.querySelector('#start')?.addEventListener('click', () => {
+  sw.start()
+})
+document.querySelector('#stop')?.addEventListener('click', () => {
+  sw.stop()
+})
+
+// teardown when leaving the page
+// unsubscribe()
+// sw.destroy()
+```
+
+Writing `textContent` (or a canvas) from `subscribe` skips framework renders entirely. Prefer this for readouts that only need a string; keep adapter bindings when `elapsed` must stay in reactive state.
+
+Share one `clock` across many `Stopwatch` instances so they coalesce onto one schedule loop.

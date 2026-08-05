@@ -11,4 +11,11 @@ export {
   type TimerClockOptions,
 } from './create-timer-clock.js'
 export { detectClock } from './detect-clock.js'
-export { Stopwatch } from './stopwatch.js'
+export { Stopwatch, type StopwatchOptions } from './stopwatch.js'
+export {
+  createDocumentVisibility,
+  createMockVisibility,
+  type MockVisibility,
+  type Visibility,
+  type VisibilityState,
+} from './visibility.js'

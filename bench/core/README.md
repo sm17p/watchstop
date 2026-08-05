@@ -26,6 +26,12 @@ BENCH_LARGE=1 mise run bench
 BENCH_N=10000 mise run bench
 ```
 
+Combine:
+
+```bash
+TICKS=30 BENCH_LARGE=1 mise run bench
+```
+
 ## Env
 
 | Variable | Effect |
@@ -48,4 +54,8 @@ BENCH_N=10000 mise run bench
 
 ## How to read shared vs per-instance
 
-Status-quo `Stopwatch` owns its own schedule loop even when you pass one shared `Clock`, so shared and per-instance schedule counts stay in the same ballpark until a shared driver lands. Compare relative orders of magnitude on the count columns; do not treat `wallMs` as a CI gate.
+After the shared clock driver (#11), **shared** mode should show roughly **one** `schedule` per tick wave (`ticks + 1` including start), while **per-instance** stays near **N × (ticks + 1)**. Listener counts still scale with N × ticks because each stopwatch still notifies its own subscribers.
+
+Pass one shared `Clock` into every `Stopwatch` under test for the shared column (`detectClock()` / bare `new Stopwatch()` still allocate a fresh clock each time).
+
+Do not treat `wallMs` as a CI gate; compare relative orders of magnitude on the count columns.

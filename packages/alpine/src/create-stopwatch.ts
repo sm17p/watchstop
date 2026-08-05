@@ -3,6 +3,7 @@ import type { Clock } from '@watchstop/core'
 
 export type CreateStopwatchOptions = {
   clock?: Clock
+  precisionMs?: number
 }
 
 export type StopwatchBinding = {
@@ -19,7 +20,9 @@ export type StopwatchBinding = {
 export function createStopwatch(
   options?: CreateStopwatchOptions,
 ): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock)
+  const stopwatch = new Stopwatch(options?.clock, {
+    precisionMs: options?.precisionMs,
+  })
   let unsubscribe = (): void => {}
 
   const binding: StopwatchBinding = {
