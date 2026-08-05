@@ -38,7 +38,7 @@ const secondsUi = new Stopwatch(createMockClock(), { precisionMs: 1000 })
 ```
 
 - `clock` is optional. When omitted, use `detectClock()`.
-- `precisionMs` (optional, finite `> 0`) coarsens **notifications**: ticks still run at clock cadence, but listeners fire only when `floor(elapsed / precisionMs)` changes, plus on forced control notifies (`start` / `stop` / `reset`). `get()` stays **live** raw milliseconds.
+- `options` (`StopwatchOptions`) is optional. See [Options](/docs/core/options) for `precisionMs` (omit vs set, validation, and when to use it).
 - Initial elapsed is `0`.
 - Initial state is **stopped** (not running).
 

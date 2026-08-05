@@ -1,0 +1,49 @@
+---
+title: Options
+description: StopwatchOptions — when to set them, and what omit means.
+---
+
+`StopwatchOptions` is the second constructor argument to `Stopwatch`. Adapters fold the same fields (plus `clock`) into one options object and forward them into `new Stopwatch(clock, options)`.
+
+```ts
+type StopwatchOptions = {
+  precisionMs?: number
+}
+
+new Stopwatch(clock?, options?: StopwatchOptions)
+```
+
+Export `StopwatchOptions` from `@watchstop/core`. Normative behavior for each field lives on this page; [Stopwatch](/docs/core/stopwatch) covers construction, methods, and the tick loop.
+
+`clock` is **not** part of `StopwatchOptions`. Pass it as the first constructor argument, or as `clock` on an adapter options object. Timer and mock clock knobs stay on [Timer](/docs/runtimes/timer) (`intervalMs`) and [Testing](/docs/runtimes/testing) (`frameDelay`).
+
+## `precisionMs`
+
+| | Omit (default) | When set |
+| --- | --- | --- |
+| Tick notifies | Every clock tick while running | Only when `floor(elapsed / precisionMs)` changes |
+| Control notifies | `start` / `stop` / `reset` always notify as specified on [Stopwatch](/docs/core/stopwatch) | Same — controls **force-notify** even inside a bucket |
+| `get()` | Live raw milliseconds | Still live raw milliseconds (not quantized) |
+
+- Use a finite number `> 0` (for example `1000` for whole-second UI). Invalid values throw (`RangeError`).
+- **Omit** when subscribers need sub-bucket updates (smooth UI, or anything that must react on every tick).
+- **Set** when the UI (or other listeners) only care about a coarser bucket — fewer subscriber wakes while ticks still run at clock cadence.
+
+```ts
+import { Stopwatch, createMockClock } from '@watchstop/core'
+
+const everyTick = new Stopwatch(createMockClock())
+const wholeSeconds = new Stopwatch(createMockClock(), { precisionMs: 1000 })
+```
+
+Framework adapters that show `elapsed` re-render on each notify. Omitting `precisionMs` under `createBrowserClock` means roughly 60 updates per second; `{ precisionMs: 1000 }` moves updates toward once per second. Keep fine-grained reads in the smallest possible component when you still need them.
+
+## Related work
+
+Not documented here until shipped:
+
+- [Visibility-aware suspend](https://github.com/sm17p/watchstop/issues/12) — candidate future `StopwatchOptions` or Browser default
+- [Shared / non-owned instance](https://github.com/sm17p/watchstop/issues/6) — adapter options (`stopwatch`), not core `StopwatchOptions`
+- [Shared scheduler](https://github.com/sm17p/watchstop/issues/11) — mostly “pass one shared `clock`”; Architecture + Stopwatch when chosen
+
+Parent tracking: [notification cost](https://github.com/sm17p/watchstop/issues/7).

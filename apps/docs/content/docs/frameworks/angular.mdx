@@ -63,7 +63,7 @@ export class Timer {
 | Option | Type | Purpose |
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
-| `precisionMs` | `number` | Coarsen notify cadence (finite `> 0`). |
+| `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
 
 ## Sharing one stopwatch across components
 
@@ -79,8 +79,6 @@ Not supported in v1. Each `injectStopwatch()` call constructs and owns its own i
 
 ## Re-render cost
 
-`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. A readout that only shows whole seconds does about sixty times the work it needs.
-
-Pass `precisionMs` (for example `1000`) to coarsen notifications toward whole-second updates. `get()` / live reads stay raw milliseconds; framework bindings update on coarsened notifies. Keep the `elapsed` read in a small component when you still want finer UI.
+`elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Pass `precisionMs` to coarsen notifies — see [Options](/docs/core/options). Keep the `elapsed` read in a small component when you still want finer UI.
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

@@ -5,7 +5,7 @@ description: Acceptance criteria and adopter constraints for implementers.
 
 This page is the contract for coding agents implementing `@watchstop/core` and later framework adapters. Core docs are the source of truth; this page lists **must-pass** behaviors and **adopter constraints** so `Store` is not accidentally React-shaped.
 
-Also read: [Architecture](/docs/architecture), [Clock](/docs/core/clock), [Store](/docs/core/store), [Stopwatch](/docs/core/stopwatch), [Browser](/docs/runtimes/browser), [Timer](/docs/runtimes/timer), [Testing](/docs/runtimes/testing).
+Also read: [Architecture](/docs/architecture), [Clock](/docs/core/clock), [Store](/docs/core/store), [Stopwatch](/docs/core/stopwatch), [Options](/docs/core/options), [Browser](/docs/runtimes/browser), [Timer](/docs/runtimes/timer), [Testing](/docs/runtimes/testing).
 
 Machine indexes: [`/llms.txt`](/llms.txt), [`/llms-full.txt`](/llms-full.txt).
 
@@ -81,6 +81,8 @@ Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
 - [ ] No `node:` imports required for the browser-safe build entry.
 
 ### Stopwatch
+
+Normative `StopwatchOptions` behavior is on [Options](/docs/core/options).
 
 - [ ] Default construction uses `detectClock()`.
 - [ ] Initial `get()` is `0`; `running` is `false`.
@@ -191,7 +193,7 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 - **Teardown is mandatory.** `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
 - **Control identities are stable** for the life of the owner, so they are safe in dependency arrays and as event handlers.
 - Expose the owned instance as `stopwatch` for callers who need to pass it elsewhere.
-- The options are `clock` and `precisionMs` (forwarded to `Stopwatch`).
+- The options are `clock` and `precisionMs` (forwarded to `Stopwatch`). See [Options](/docs/core/options) for normative `StopwatchOptions` behavior.
 
 ### Packaging (Wave 1 adapters)
 
