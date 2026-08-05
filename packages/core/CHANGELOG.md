@@ -1,5 +1,11 @@
 # @watchstop/core
 
+## 0.3.0
+
+### Minor Changes
+
+- f21eb27: Add Stopwatch `precisionMs` notification coarsening. Adapters forward `precisionMs` to the owned Stopwatch.
+
 ## 0.2.0
 
 ### Minor Changes
