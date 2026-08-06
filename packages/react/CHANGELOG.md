@@ -1,5 +1,12 @@
 # @watchstop/react
 
+## 1.2.1
+
+### Patch Changes
+
+- Updated dependencies [196451e]
+  - @watchstop/core@0.4.0
+
 ## 1.2.0
 
 ### Minor Changes
