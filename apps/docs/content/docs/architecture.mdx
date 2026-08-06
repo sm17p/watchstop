@@ -27,9 +27,10 @@ detectClock         ───────────────┘
 
 1. **No framework imports in core.** Angular, Qwik, and Alpine must consume the same `Store` contract as React.
 2. **One timer clock for Node, Bun, and Deno.** All three expose `performance.now` and `setTimeout` / `clearTimeout`. Do not ship `@watchstop/node`, `@watchstop/bun`, or `@watchstop/deno`.
-3. **Default clock via `detectClock()`.** Prefer browser (`requestAnimationFrame`) when present; otherwise timer clock. No hard `node:` imports in the browser build.
-4. **Countdown / Ticker are out of v1.** Only `Stopwatch` ships in the first core release.
-5. **Adapters are thin.** No timing math, no clocks, no elapsed accumulation in adapters.
+3. **Default clock via `detectClock()`.** Prefer browser (`requestAnimationFrame`) when present; otherwise timer clock. Each call returns a **fresh** clock — not a realm singleton. No hard `node:` imports in the browser build.
+4. **Shared schedule per clock identity.** Running stopwatches that share one `Clock` object share one underlying `schedule` loop. Pass one shared clock when you want coalescing; bare `new Stopwatch()` / `detectClock()` do not share.
+5. **Countdown / Ticker are out of v1.** Only `Stopwatch` ships in the first core release.
+6. **Adapters are thin.** No timing math, no clocks, no elapsed accumulation in adapters.
 
 ## Adapter entry-point naming
 
@@ -49,11 +50,11 @@ Factories exist where the framework has no hook or inject context to hang owners
 
 ## Data flow while running
 
-1. `start()` records `startTime = clock.now()`, schedules the next tick with `clock.schedule`, and notifies subscribers (even when elapsed is still `0`) so adapters can sync `running`.
-2. Each tick recomputes `elapsed = accumulated + (clock.now() - startTime)` and notifies subscribers.
-3. `stop()` cancels the scheduled handle, adds the current segment into `accumulated`, clears `startTime`, and sets `running = false`.
+1. `start()` records `startTime = clock.now()`, notifies subscribers (even when elapsed is still `0`) so adapters can sync `running`, and registers with the shared driver for that `clock`.
+2. Each shared tick recomputes `elapsed = accumulated + (clock.now() - startTime)` and notifies subscribers for every registered stopwatch that still wants ticks.
+3. `stop()` unregisters from the driver, adds the current segment into `accumulated`, clears `startTime`, and sets `running = false`.
 4. `get()` returns the live elapsed value (running or stopped). `running` is the public flag for whether a segment is active.
-5. `destroy()` stops scheduling, clears listeners, sets `running = false`, and makes further use a no-op or safe idle state (see [Stopwatch](/docs/core/stopwatch)).
+5. `destroy()` unregisters, clears listeners, sets `running = false`, and makes further use a no-op or safe idle state (see [Stopwatch](/docs/core/stopwatch)).
 
 ## Runtime matrix
 
