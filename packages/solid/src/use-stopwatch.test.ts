@@ -8,10 +8,13 @@ type RootedStopwatch = {
   binding: StopwatchBinding
 }
 
-function runInRoot(clock: Clock): RootedStopwatch {
+function runInRoot(
+  clock: Clock,
+  options?: { reactiveElapsed?: boolean },
+): RootedStopwatch {
   return createRoot((disposeRoot) => ({
     disposeRoot,
-    binding: useStopwatch({ clock }),
+    binding: useStopwatch({ clock, reactiveElapsed: options?.reactiveElapsed }),
   }))
 }
 
@@ -67,6 +70,25 @@ describe('useStopwatch', () => {
     expect(binding.start).toBe(start)
     expect(binding.stop).toBe(stop)
     expect(binding.reset).toBe(reset)
+  })
+
+  it('skips elapsed framework updates on ticks when reactiveElapsed is false', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const { binding } = runInRoot(clock, { reactiveElapsed: false })
+
+    binding.start()
+    expect(binding.running()).toBe(true)
+    expect(binding.elapsed()).toBe(0)
+
+    clock.advance(16)
+    clock.advance(16)
+    expect(binding.stopwatch.get()).toBe(32)
+    expect(binding.elapsed()).toBe(0)
+    expect(binding.running()).toBe(true)
+
+    binding.stop()
+    expect(binding.running()).toBe(false)
+    expect(binding.elapsed()).toBe(32)
   })
 
   it('destroys the stopwatch when the owning root disposes', () => {

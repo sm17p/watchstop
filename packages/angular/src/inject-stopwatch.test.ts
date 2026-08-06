@@ -17,14 +17,17 @@ type InjectedStopwatch = {
   destroyHost: () => void
 }
 
-function runInjected(clock: Clock): InjectedStopwatch {
+function runInjected(
+  clock: Clock,
+  options?: { reactiveElapsed?: boolean },
+): InjectedStopwatch {
   const parent = TestBed.inject(EnvironmentInjector)
   const host = createEnvironmentInjector(
     [provideZonelessChangeDetection()],
     parent,
   )
   const binding = runInInjectionContext(host, () =>
-    injectStopwatch({ clock }),
+    injectStopwatch({ clock, reactiveElapsed: options?.reactiveElapsed }),
   )
   return {
     binding,
@@ -96,6 +99,25 @@ describe('injectStopwatch', () => {
     expect(binding.start).toBe(start)
     expect(binding.stop).toBe(stop)
     expect(binding.reset).toBe(reset)
+  })
+
+  it('skips elapsed signal updates on ticks when reactiveElapsed is false', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const { binding } = runInjected(clock, { reactiveElapsed: false })
+
+    binding.start()
+    expect(binding.running()).toBe(true)
+    expect(binding.elapsed()).toBe(0)
+
+    clock.advance(16)
+    clock.advance(16)
+    expect(binding.stopwatch.get()).toBe(32)
+    expect(binding.elapsed()).toBe(0)
+    expect(binding.running()).toBe(true)
+
+    binding.stop()
+    expect(binding.running()).toBe(false)
+    expect(binding.elapsed()).toBe(32)
   })
 
   it('destroys the stopwatch when DestroyRef cleans up', () => {

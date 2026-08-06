@@ -123,7 +123,7 @@ The generic `Store<T>` bridge each adapter uses internally is **not** public API
 `@watchstop/react`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchBinding = {
   elapsed: number
@@ -140,7 +140,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/vue`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchBinding = {
   elapsed: Readonly<ShallowRef<number>>
@@ -157,7 +157,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/solid`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchBinding = {
   elapsed: Accessor<number>
@@ -174,7 +174,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/svelte`:
 
 ```ts
-type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchStore = Readable<number> & {
   running: Readable<boolean>
@@ -195,7 +195,8 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 - **Teardown is mandatory.** `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
 - **Control identities are stable** for the life of the owner, so they are safe in dependency arrays and as event handlers.
 - Expose the owned instance as `stopwatch` for callers who need to pass it elsewhere.
-- The options are `clock` and `precisionMs` (forwarded to `Stopwatch`). See [Options](/docs/core/options) for normative `StopwatchOptions` behavior.
+- The options are `clock`, `precisionMs`, and `reactiveElapsed` (default `true`). `clock` and `precisionMs` are forwarded to `Stopwatch`. See [Options](/docs/core/options) for normative `StopwatchOptions` behavior.
+- `reactiveElapsed: false` skips bridging tick notifies into framework `elapsed` while keeping `running` / start / stop / reset reactive. Snapshot `elapsed` on control transitions (`running` changed or not running). Live digits use `stopwatch.subscribe` → DOM — see [Vanilla](/docs/frameworks/vanilla).
 
 ### Packaging (adapters)
 
@@ -231,7 +232,7 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 ### Angular (`@watchstop/angular`)
 
 ```ts
-type InjectStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type InjectStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -254,7 +255,7 @@ declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBin
 ### Qwik (`@watchstop/qwik`)
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -269,7 +270,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 ```
 
 - Peer is `@qwik.dev/core` (Qwik 2), not `@builder.io/qwik`.
-- Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks. Sync `running` from `stopwatch.running` in that subscribe callback.
+- Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks. Sync `running` from `stopwatch.running` in that subscribe callback. When `reactiveElapsed` is false, skip writing the `elapsed` signal on ticks.
 - Hold the owned `Stopwatch` with `noSerialize()` on a signal holder so QRL captures are legal; expose controls as `$()` QRLs (`onClick$={start}`). For custom handlers, call methods on the exposed `stopwatch` instance instead of nesting QRL invokes.
 - Task cleanup unsubscribes and calls `destroy()`.
 - Keep adapter thin so core stays free of framework closures beyond user listeners.
@@ -279,7 +280,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 ### Alpine (`@watchstop/alpine`)
 
 ```ts
-type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number; reactiveElapsed?: boolean }
 
 type StopwatchBinding = {
   elapsed: number
@@ -297,7 +298,7 @@ declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBin
 
 - Alpine has no hook/inject context, so the entry point is a factory (same rationale as Svelte).
 - No plugin / `Alpine.data` registration helper — one entry point only; callers may wrap `createStopwatch()` in their own `Alpine.data` if they want a name.
-- `init` performs imperative `subscribe` (writes `elapsed` and `running` through `this` for Alpine reactivity).
+- `init` performs imperative `subscribe` (writes `elapsed` and `running` through `this` for Alpine reactivity). When `reactiveElapsed` is false, skip assigning `this.elapsed` on ticks.
 - `destroy` unsubscribes and destroys; Alpine invokes it on element removal.
 - Implication for core: destroy/unsubscribe paths must be idempotent (already required).
 

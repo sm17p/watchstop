@@ -3,4 +3,37 @@ title: Vanilla
 description: Use core directly in the browser.
 ---
 
-Docs after core ships. Docs-only — no dedicated package.
+Use `@watchstop/core` without a framework adapter. Docs-only — no dedicated package.
+
+```ts
+import { Stopwatch, createBrowserClock } from '@watchstop/core'
+
+const clock = createBrowserClock()
+const sw = new Stopwatch(clock)
+const elapsedNode = document.querySelector('#elapsed')
+
+const unsubscribe = sw.subscribe((elapsed) => {
+  if (elapsedNode) {
+    elapsedNode.textContent = `${elapsed} ms`
+  }
+})
+
+document.querySelector('#start')?.addEventListener('click', () => {
+  sw.start()
+})
+document.querySelector('#stop')?.addEventListener('click', () => {
+  sw.stop()
+})
+document.querySelector('#reset')?.addEventListener('click', () => {
+  sw.reset()
+})
+
+unsubscribe()
+sw.destroy()
+```
+
+Writing `textContent` from `subscribe` is the render-free path: each notify updates the DOM directly with no framework state. Prefer this for readouts that only need a string. Pass `precisionMs` to coarsen how often the callback runs — see [Options](/docs/core/options).
+
+Framework adapters default to bridging every tick into reactive `elapsed`. Pass `reactiveElapsed: false` on those bindings when controls should stay reactive but live digits should use this same `stopwatch.subscribe` → DOM recipe instead. See each [framework](/docs/frameworks) page.
+
+Share one `clock` across many `Stopwatch` instances so they coalesce onto one schedule loop — see [Architecture](/docs/architecture).

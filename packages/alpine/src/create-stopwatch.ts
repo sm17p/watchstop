@@ -4,6 +4,7 @@ import type { Clock } from '@watchstop/core'
 export type CreateStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 export type StopwatchBinding = {
@@ -20,6 +21,7 @@ export type StopwatchBinding = {
 export function createStopwatch(
   options?: CreateStopwatchOptions,
 ): StopwatchBinding {
+  const reactiveElapsed = options?.reactiveElapsed !== false
   const stopwatch = new Stopwatch(options?.clock, {
     precisionMs: options?.precisionMs,
   })
@@ -40,9 +42,17 @@ export function createStopwatch(
     stopwatch,
     init(this: StopwatchBinding): void {
       unsubscribe()
+      let previousRunning = stopwatch.running
       unsubscribe = stopwatch.subscribe((value) => {
-        this.elapsed = value
-        this.running = stopwatch.running
+        const nextRunning = stopwatch.running
+        const runningChanged = previousRunning !== nextRunning
+        previousRunning = nextRunning
+        if (runningChanged) {
+          this.running = nextRunning
+        }
+        if (reactiveElapsed || runningChanged || !nextRunning) {
+          this.elapsed = value
+        }
       })
     },
     destroy(): void {

@@ -13,6 +13,7 @@ Adapter bridging `Store` into an Angular signal, cleaned up with `DestroyRef`. `
 type InjectStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 type StopwatchBinding = {
@@ -64,6 +65,7 @@ export class Timer {
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
 | `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `reactiveElapsed` | `boolean` | Default `true`. When `false`, tick notifies do not update the `elapsed` signal; `running` and controls still update. Snapshot `elapsed` on control transitions. |
 
 ## Sharing one stopwatch across components
 
@@ -80,5 +82,9 @@ Not supported in v1. Each `injectStopwatch()` call constructs and owns its own i
 ## Re-render cost
 
 `elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Pass `precisionMs` to coarsen notifies — see [Options](/docs/core/options). Keep the `elapsed` read in a small component when you still want finer UI.
+
+## Render-free elapsed
+
+Pass `{ reactiveElapsed: false }` so ticks skip the `elapsed` signal while `running` stays reactive. Write live digits from `stopwatch.subscribe` into the DOM. See [Vanilla](/docs/frameworks/vanilla).
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

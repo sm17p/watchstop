@@ -76,6 +76,28 @@ describe('createStopwatch', () => {
     binding.destroy()
   })
 
+  it('skips elapsed proxy writes on ticks when reactiveElapsed is false', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const binding = createStopwatch({ clock, reactiveElapsed: false })
+    binding.init()
+
+    binding.start()
+    expect(binding.running).toBe(true)
+    expect(binding.elapsed).toBe(0)
+
+    clock.advance(16)
+    clock.advance(16)
+    expect(binding.stopwatch.get()).toBe(32)
+    expect(binding.elapsed).toBe(0)
+    expect(binding.running).toBe(true)
+
+    binding.stop()
+    expect(binding.running).toBe(false)
+    expect(binding.elapsed).toBe(32)
+
+    binding.destroy()
+  })
+
   it('destroys the stopwatch when destroy runs', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const binding = createStopwatch({ clock })

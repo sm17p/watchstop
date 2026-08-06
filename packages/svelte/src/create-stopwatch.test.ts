@@ -75,6 +75,34 @@ describe('createStopwatch', () => {
     stopwatch.stopwatch.destroy()
   })
 
+  it('skips elapsed readable notifies on ticks when reactiveElapsed is false', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const stopwatch = createStopwatch({ clock, reactiveElapsed: false })
+    const received: number[] = []
+    const runningStates: boolean[] = []
+    const unsubscribeElapsed = stopwatch.subscribe((value) => {
+      received.push(value)
+    })
+    const unsubscribeRunning = stopwatch.running.subscribe((value) => {
+      runningStates.push(value)
+    })
+
+    stopwatch.start()
+    clock.advance(16)
+    clock.advance(16)
+    expect(stopwatch.stopwatch.get()).toBe(32)
+    expect(received).toEqual([0, 0])
+    expect(runningStates).toEqual([false, true])
+
+    stopwatch.stop()
+    expect(received).toEqual([0, 0, 32])
+    expect(runningStates).toEqual([false, true, false])
+
+    unsubscribeElapsed()
+    unsubscribeRunning()
+    stopwatch.stopwatch.destroy()
+  })
+
   it('exposes a running store that tracks start and stop', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const stopwatch = createStopwatch({ clock })

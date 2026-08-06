@@ -13,6 +13,7 @@ Alpine has no hook or inject context, so the entry point is a **factory** — th
 type CreateStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 type StopwatchBinding = {
@@ -67,6 +68,7 @@ Alpine.data('timer', () => createStopwatch())
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
 | `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `reactiveElapsed` | `boolean` | Default `true`. When `false`, tick notifies do not assign `this.elapsed`; `running` and controls still update. Snapshot `elapsed` on control transitions. |
 
 ## Sharing one stopwatch across components
 
@@ -79,5 +81,9 @@ React, Vue, Solid, and Qwik have hook or composable context. Angular has `inject
 ## Re-render cost
 
 `elapsed` is raw milliseconds delivered at the clock's tick cadence. Pass `precisionMs` to coarsen notifies — see [Options](/docs/core/options). Keep the `x-text` / binding read in the smallest possible element when you still want finer UI.
+
+## Render-free elapsed
+
+Pass `{ reactiveElapsed: false }` so ticks skip `this.elapsed` assignments while `running` stays reactive. Write live digits from `stopwatch.subscribe` into a DOM node (or use an Alpine `x-effect` that only touches a non-reactive field). See [Vanilla](/docs/frameworks/vanilla).
 
 See [Store](/docs/core/store), [Architecture](/docs/architecture), and [Agents](/docs/agents).

@@ -17,6 +17,7 @@ The owned `Stopwatch` is held with [`noSerialize()`](https://qwik.dev/docs/advan
 type UseStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 type StopwatchBinding = {
@@ -65,6 +66,7 @@ export const Timer = component$(() => {
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
 | `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `reactiveElapsed` | `boolean` | Default `true`. When `false`, tick notifies do not write the `elapsed` signal; `running` and controls still update. Snapshot `elapsed` on control transitions. |
 
 ## Sharing one stopwatch across components
 
@@ -79,5 +81,9 @@ Not supported in v1. Each `useStopwatch()` call constructs and owns its own inst
 ## Re-render cost
 
 `elapsed` is raw milliseconds delivered at the clock's tick cadence, so anything reading the signal re-renders roughly 60 times a second under `createBrowserClock`. Pass `precisionMs` to coarsen notifies — see [Options](/docs/core/options). Keep the `elapsed` read in the smallest possible component when you still want finer UI.
+
+## Render-free elapsed
+
+Pass `{ reactiveElapsed: false }` so ticks skip the `elapsed` signal while `running` stays reactive. Write live digits from `stopwatch.subscribe` into the DOM. See [Vanilla](/docs/frameworks/vanilla).
 
 See [Store](/docs/core/store) and [Agents](/docs/agents).

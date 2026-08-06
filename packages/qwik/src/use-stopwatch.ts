@@ -13,6 +13,7 @@ import {
 export type UseStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 export type StopwatchBinding = {
@@ -25,6 +26,7 @@ export type StopwatchBinding = {
 }
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
+  const reactiveElapsed = options?.reactiveElapsed !== false
   const instance = useSignal<NoSerialize<Stopwatch>>()
   if (instance.value === undefined) {
     instance.value = noSerialize(
@@ -45,9 +47,17 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     if (current === undefined) {
       return
     }
+    let previousRunning = current.running
     const unsubscribe = current.subscribe((value) => {
-      elapsed.value = value
-      running.value = current.running
+      const nextRunning = current.running
+      const runningChanged = previousRunning !== nextRunning
+      previousRunning = nextRunning
+      if (runningChanged) {
+        running.value = nextRunning
+      }
+      if (reactiveElapsed || runningChanged || !nextRunning) {
+        elapsed.value = value
+      }
     })
     cleanup(() => {
       unsubscribe()

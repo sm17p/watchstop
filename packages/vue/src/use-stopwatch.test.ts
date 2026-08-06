@@ -74,6 +74,34 @@ describe('useStopwatch', () => {
     expect(binding.reset).toBe(reset)
   })
 
+  it('skips elapsed framework updates on ticks when reactiveElapsed is false', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const scope = effectScope()
+    let binding: StopwatchBinding | undefined
+    scope.run(() => {
+      binding = useStopwatch({ clock, reactiveElapsed: false })
+    })
+    if (binding === undefined) {
+      throw new Error('effect scope did not run the composable')
+    }
+
+    binding.start()
+    expect(binding.running.value).toBe(true)
+    expect(binding.elapsed.value).toBe(0)
+
+    clock.advance(16)
+    clock.advance(16)
+    expect(binding.stopwatch.get()).toBe(32)
+    expect(binding.elapsed.value).toBe(0)
+    expect(binding.running.value).toBe(true)
+
+    binding.stop()
+    expect(binding.running.value).toBe(false)
+    expect(binding.elapsed.value).toBe(32)
+
+    scope.stop()
+  })
+
   it('destroys the stopwatch when the owning scope stops', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const { scope, binding } = runInScope(clock)

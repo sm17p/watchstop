@@ -161,6 +161,46 @@ describe('useStopwatch', () => {
     expect(stopwatch.get()).toBe(16)
   })
 
+  it('skips elapsed framework updates on ticks when reactiveElapsed is false', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const renderedElapsed: number[] = []
+    const renderedRunning: boolean[] = []
+    const { result } = renderHook(() => {
+      const binding = useStopwatch({ clock, reactiveElapsed: false })
+      renderedElapsed.push(binding.elapsed)
+      renderedRunning.push(binding.running)
+      return binding
+    })
+
+    act(() => {
+      result.current.start()
+    })
+    expect(result.current.running).toBe(true)
+    expect(result.current.elapsed).toBe(0)
+    const elapsedRendersAfterStart = renderedElapsed.length
+    const runningRendersAfterStart = renderedRunning.length
+
+    act(() => {
+      clock.advance(16)
+    })
+    act(() => {
+      clock.advance(16)
+    })
+    expect(result.current.stopwatch.get()).toBe(32)
+    expect(result.current.elapsed).toBe(0)
+    expect(renderedElapsed.length).toBe(elapsedRendersAfterStart)
+    expect(renderedRunning.at(-1)).toBe(true)
+    expect(renderedRunning.length).toBe(runningRendersAfterStart)
+
+    act(() => {
+      result.current.stop()
+    })
+    expect(result.current.running).toBe(false)
+    expect(result.current.elapsed).toBe(32)
+    expect(renderedElapsed.at(-1)).toBe(32)
+    expect(renderedRunning.at(-1)).toBe(false)
+  })
+
   it('survives Strict Mode double invoke without orphaning a ticking stopwatch', () => {
     const counting = createCountingClock()
     const { result, unmount } = renderHook(

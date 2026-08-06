@@ -6,6 +6,7 @@ import { useStore } from './use-store.js'
 export type UseStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 export type StopwatchBinding = {
@@ -18,14 +19,26 @@ export type StopwatchBinding = {
 }
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
+  const reactiveElapsed = options?.reactiveElapsed !== false
   const stopwatch = new Stopwatch(options?.clock, {
     precisionMs: options?.precisionMs,
   })
-  const elapsed = useStore(stopwatch)
   const [running, setRunning] = createSignal(stopwatch.running)
+  const [controlElapsed, setControlElapsed] = createSignal(stopwatch.get())
+  const elapsed = reactiveElapsed ? useStore(stopwatch) : controlElapsed
+
+  let previousRunning = stopwatch.running
   onCleanup(
-    stopwatch.subscribe(() => {
-      setRunning(stopwatch.running)
+    stopwatch.subscribe((value) => {
+      const nextRunning = stopwatch.running
+      const runningChanged = previousRunning !== nextRunning
+      previousRunning = nextRunning
+      if (runningChanged) {
+        setRunning(nextRunning)
+      }
+      if (!reactiveElapsed && (runningChanged || !nextRunning)) {
+        setControlElapsed(() => value)
+      }
     }),
   )
 

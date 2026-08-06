@@ -13,6 +13,7 @@ Adapter over `Store` via `useSyncExternalStore`. `@watchstop/core` is a peer dep
 type UseStopwatchOptions = {
   clock?: Clock
   precisionMs?: number
+  reactiveElapsed?: boolean
 }
 
 type StopwatchBinding = {
@@ -58,6 +59,7 @@ export function Timer() {
 | --- | --- | --- |
 | `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
 | `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `reactiveElapsed` | `boolean` | Default `true`. When `false`, tick notifies do not update framework `elapsed`; `running` and controls still update. Snapshot `elapsed` on control transitions. |
 
 Passing a different `clock` or `precisionMs` destroys the current instance and builds a fresh one.
 
@@ -74,6 +76,43 @@ Not supported in v1. Each `useStopwatch()` call constructs and owns its own inst
 ## Re-render cost
 
 `elapsed` is raw milliseconds delivered at the clock's tick cadence, so a component reading it re-renders roughly 60 times a second under `createBrowserClock`. Pass `precisionMs` to coarsen notifies — see [Options](/docs/core/options). Keep `elapsed` in the smallest possible component when you still want finer UI.
+
+## Render-free elapsed
+
+Omitting `elapsed` from JSX is not enough: `useStore` still re-renders the host on every tick notify. Pass `{ reactiveElapsed: false }` so ticks skip the elapsed bridge while `running` / start / stop / reset stay reactive. Write live digits from the owned instance:
+
+```tsx
+import { useEffect, useRef } from 'react'
+import { useStopwatch } from '@watchstop/react'
+
+export function Timer() {
+  const readout = useRef<HTMLParagraphElement>(null)
+  const { running, start, stop, reset, stopwatch } = useStopwatch({
+    reactiveElapsed: false,
+  })
+
+  useEffect(() => {
+    const node = readout.current
+    if (node === null) {
+      return
+    }
+    node.textContent = `${stopwatch.get()} ms`
+    return stopwatch.subscribe((elapsed) => {
+      node.textContent = `${elapsed} ms`
+    })
+  }, [stopwatch])
+
+  return (
+    <>
+      <p ref={readout} />
+      <button onClick={running ? stop : start}>{running ? 'Stop' : 'Start'}</button>
+      <button onClick={reset}>Reset</button>
+    </>
+  )
+}
+```
+
+Same recipe without an adapter: [Vanilla](/docs/frameworks/vanilla).
 
 ## `useSyncExternalStore` (normative)
 

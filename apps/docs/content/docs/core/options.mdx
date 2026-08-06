@@ -40,10 +40,11 @@ Framework adapters that show `elapsed` re-render on each notify. Omitting `preci
 
 ## Related work
 
+Adapter option (not `StopwatchOptions`): `reactiveElapsed` on Wave 1 / Wave 2 bindings. Default `true`. When `false`, tick notifies skip the framework `elapsed` bridge while `running` / controls stay reactive. See framework pages and [Vanilla](/docs/frameworks/vanilla).
+
 Not documented here until shipped:
 
 - [Visibility-aware suspend](https://github.com/sm17p/watchstop/issues/12) — candidate future `StopwatchOptions` or Browser default
 - [Shared / non-owned instance](https://github.com/sm17p/watchstop/issues/6) — adapter options (`stopwatch`), not core `StopwatchOptions`
-- [Shared scheduler](https://github.com/sm17p/watchstop/issues/11) — mostly “pass one shared `clock`”; Architecture + Stopwatch when chosen
 
 Parent tracking: [notification cost](https://github.com/sm17p/watchstop/issues/7).
