@@ -100,6 +100,8 @@ Normative `StopwatchOptions` behavior is on [Options](/docs/core/options).
 - [ ] `destroy` stops ticks, clears listeners, freezes `get()`, ignores later `start`/`stop`/`reset`.
 - [ ] `subscribe` after `destroy` does not retain listeners.
 - [ ] `precisionMs` coarsens tick notifies to bucket changes; `get()` stays live; control paths force-notify.
+- [ ] Multiple running stopwatches on one clock identity produce one underlying `schedule` per tick wave.
+- [ ] `detectClock()` / bare `new Stopwatch()` still allocate a fresh clock each call (sharing requires passing one clock).
 
 ### Packaging
 

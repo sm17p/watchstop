@@ -42,6 +42,8 @@ const secondsUi = new Stopwatch(createMockClock(), { precisionMs: 1000 })
 - Initial elapsed is `0`.
 - Initial state is **stopped** (not running).
 
+Stopwatches that share the **same** `Clock` object share one underlying `schedule` loop (fan-out per tick). Prefer `const clock = createBrowserClock()` (or one mock) passed into each instance when you want coalescing. `detectClock()` / bare `new Stopwatch()` still create a fresh clock per call.
+
 ## Internal model (normative)
 
 Implementers should keep equivalent state:
@@ -52,9 +54,10 @@ Implementers should keep equivalent state:
 | `accumulated` | Elapsed ms from completed run segments |
 | `startTime` | `clock.now()` at last `start`, or unset when stopped |
 | `running` | Whether a segment is active |
-| `handle` | Pending `schedule` handle, or unset |
 | `listeners` | Set of subscribed callbacks |
 | `destroyed` | Whether `destroy()` has been called |
+
+Scheduling is owned by an internal shared driver keyed by `Clock` identity (not a public export). While registered and wanting ticks, that driver holds at most one pending `schedule` handle for the clock.
 
 While **running**, visible elapsed is:
 
@@ -76,12 +79,12 @@ While **stopped**, visible elapsed is `accumulated`.
 
 - If `destroyed`, no-op.
 - If already running, no-op (do **not** reset `startTime`).
-- Otherwise set `running = true`, `startTime = clock.now()`, schedule the tick loop, and **notify** listeners (even when elapsed is still `0`). Adapters sync UI `running` from this notification.
+- Otherwise set `running = true`, `startTime = clock.now()`, **notify** listeners (even when elapsed is still `0`), and register with the shared driver for `clock`. Adapters sync UI `running` from this notification.
 
 ### `stop(): void`
 
 - If `destroyed` or not running, no-op.
-- Cancel pending `handle`.
+- Unregister from the shared driver.
 - Set `accumulated = accumulated + (clock.now() - startTime)`.
 - Clear `startTime`, set `running = false`.
 - Notify listeners with the stopped elapsed value.
@@ -89,7 +92,7 @@ While **stopped**, visible elapsed is `accumulated`.
 ### `reset(): void`
 
 - If `destroyed`, no-op.
-- Cancel pending `handle` if any.
+- Unregister from the shared driver if registered.
 - Set `accumulated = 0`, clear `startTime`, set `running = false`.
 - Notify listeners with `0` when the previous visible value was not already `0`.
 
@@ -120,10 +123,12 @@ While **stopped**, visible elapsed is `accumulated`.
 
 While running:
 
-1. `handle = clock.schedule(() => onTick())`
-2. `onTick`: if not running or destroyed, return; notify listeners with `get()` subject to `precisionMs` coarsening; if still running and not destroyed, schedule again. A listener may call `stop` / `reset` / `destroy` during notify — do not re-schedule in that case.
+1. Register with the shared driver for `clock` (one `clock.schedule` per clock identity, not per stopwatch).
+2. On each shared tick: if still running and not destroyed, notify listeners with `get()` subject to `precisionMs` coarsening; the driver re-schedules while any registered stopwatch still wants ticks.
 
-Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which — it re-schedules after each callback only while still running and not destroyed.
+Browser clocks fire once per frame; timer clocks fire once per `intervalMs`. Stopwatch does not care which.
+
+A listener may call `stop` / `reset` / `destroy` during notify — that instance unregisters and is not re-scheduled. Mid-wave unregister of one instance must not skip peers already snapshotted for that driver wave.
 
 ## Edge cases
 
@@ -156,9 +161,10 @@ unsubscribe()
 sw.destroy()
 ```
 
-## Out of scope (v1)
+## Out of scope
 
 - Pause vs stop distinctions beyond `stop`
 - Lap times
 - Countdown / Ticker
-- Persistence / workers / multiplayer
+- Persistence / multiplayer
+- Worker clocks / boundary-aligned `Clock.schedule` delay (tracked separately)

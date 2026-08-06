@@ -306,4 +306,49 @@ describe('Stopwatch', () => {
       () => new Stopwatch(createMockClock(), { precisionMs: Number.NaN }),
     ).toThrow(RangeError)
   })
+
+  test('shares one clock schedule across stopwatches on the same clock', () => {
+    const mockClock = createMockClock()
+    const schedule = vi.spyOn(mockClock, 'schedule')
+    const count = 8
+    const stopwatches = Array.from(
+      { length: count },
+      () => new Stopwatch(mockClock),
+    )
+    for (const stopwatch of stopwatches) {
+      stopwatch.start()
+    }
+    expect(schedule).toHaveBeenCalledOnce()
+    const waves = 5
+    for (let wave = 0; wave < waves; wave += 1) {
+      mockClock.advance(1)
+      expect(schedule).toHaveBeenCalledTimes(wave + 2)
+    }
+    for (const stopwatch of stopwatches) {
+      stopwatch.destroy()
+    }
+    const schedulesAfterDestroy = schedule.mock.calls.length
+    mockClock.advance(10)
+    expect(schedule).toHaveBeenCalledTimes(schedulesAfterDestroy)
+  })
+
+  test('keeps notifying peers when one stopwatch destroys mid shared tick', () => {
+    const mockClock = createMockClock()
+    const first = new Stopwatch(mockClock)
+    const second = new Stopwatch(mockClock)
+    first.start()
+    second.start()
+    const firstListener = vi.fn(() => {
+      first.destroy()
+    })
+    const secondListener = vi.fn()
+    first.subscribe(firstListener)
+    second.subscribe(secondListener)
+    mockClock.advance(1)
+    expect(firstListener).toHaveBeenCalledOnce()
+    expect(secondListener).toHaveBeenCalledOnce()
+    expect(secondListener).toHaveBeenLastCalledWith(1)
+    expect(second.get()).toBe(1)
+    second.destroy()
+  })
 })
