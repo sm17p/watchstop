@@ -116,14 +116,21 @@ Adapters must stay thin: **only** construct a `Stopwatch` and bridge `get` / `su
 
 ### Exact public names (adapters)
 
-Every adapter ships exactly **one** entry point: the instance-owning binding, plus its option and return types. A component either owns its stopwatch or does not use the adapter.
+Every adapter ships exactly **one** entry point: the binding factory/hook, plus its option and return types. By default the entry point **owns** a `Stopwatch` and tears it down. Pass `stopwatch` to **borrow** an existing instance (no create, no `destroy` on teardown). That is the shared-instance path from [issue #6](https://github.com/sm17p/watchstop/issues/6).
 
-The generic `Store<T>` bridge each adapter uses internally is **not** public API. `Stopwatch` is the only `Store` in core today, so exporting a primitive over the type family would fix a shared-instance API before there is a second store to validate it against. Deferred to [issue #6](https://github.com/sm17p/watchstop/issues/6) and revisited when `Countdown` / `Ticker` land; adding an export later is not a breaking change.
+The generic `Store<T>` bridge each adapter uses internally is **not** public API. A Store-wide primitive can still land later when `Countdown` / `Ticker` exist; `stopwatch?: Stopwatch` on adapter options is enough for v1 sharing.
+
+Options are a discriminant — owned construction knobs **or** a borrowed instance, not both:
+
+```ts
+type OwnedStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type BorrowedStopwatchOptions = { stopwatch: Stopwatch }
+```
 
 `@watchstop/react`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchBinding = {
   elapsed: number
@@ -140,7 +147,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/vue`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchBinding = {
   elapsed: Readonly<ShallowRef<number>>
@@ -157,7 +164,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/solid`:
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchBinding = {
   elapsed: Accessor<number>
@@ -174,7 +181,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 `@watchstop/svelte`:
 
 ```ts
-type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type CreateStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchStore = Readable<number> & {
   running: Readable<boolean>
@@ -189,13 +196,14 @@ declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchSto
 
 React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosystems expect. Svelte uses `createStopwatch` because `svelte/store` already exports `fromStore` / `toStore` for converting between stores and runes.
 
-### Rules for the instance-owning entry points
+### Rules for the adapter entry points
 
-- **Must not auto-start.** Construction is inert until `start()`.
-- **Teardown is mandatory.** `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
-- **Control identities are stable** for the life of the owner, so they are safe in dependency arrays and as event handlers.
-- Expose the owned instance as `stopwatch` for callers who need to pass it elsewhere.
-- The options are `clock` and `precisionMs` (forwarded to `Stopwatch`). See [Options](/docs/core/options) for normative `StopwatchOptions` behavior.
+- **Must not auto-start.** Construction / binding is inert until `start()`.
+- **Owned teardown is mandatory.** When the adapter constructs the instance, `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
+- **Borrowed instances are never destroyed by the adapter.** Pass `stopwatch` to bind; unmount only unsubscribes.
+- **Control identities are stable** for the life of the binding, so they are safe in dependency arrays and as event handlers.
+- Expose the bound instance as `stopwatch` for callers who need to pass it elsewhere.
+- Owned options are `clock` and `precisionMs` (forwarded to `Stopwatch`). Borrowed options are only `stopwatch`. See [Options](/docs/core/options).
 
 ### Packaging (adapters)
 
@@ -208,30 +216,30 @@ React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosy
 - **MUST NOT** pass live `store.get` / `stopwatch.get` as `getSnapshot`. Cache the value from `subscribe` (or a versioned snapshot updated only in the listener); `getSnapshot` returns that cached snapshot so it is stable between notifications.
 - Do not use `useState` + manual subscribe as the primary path.
 - SSR: initial / server snapshot may use one `get()`; must be safe without `window`.
-- `useStopwatch` creates the instance with a lazy `useRef` and destroys it in a `useEffect` cleanup — **not** `useMemo`, which React may discard. Strict Mode double-invoke must rebuild and republish the instance rather than leave a destroyed or orphaned stopwatch.
+- `useStopwatch` creates the instance with a lazy `useRef` and destroys it in a `useEffect` cleanup when owning — **not** `useMemo`, which React may discard. Strict Mode double-invoke must rebuild and republish the instance rather than leave a destroyed or orphaned stopwatch. When borrowing, skip create/destroy.
 
 ### Svelte (`@watchstop/svelte`)
 
 - Expose a readable-store shape (`subscribe` compatible with `$store` auto-subscription).
 - May wrap `Stopwatch` or implement the readable contract by delegating to `subscribe`/`get`.
 - `subscribe` must call the listener synchronously with `get()` before registering it, per Svelte's readable contract.
-- `createStopwatch` ties `destroy()` to `onDestroy`, **not** to last-unsubscribe: a store may be subscribed and unsubscribed repeatedly, and a stopwatch may legitimately run with zero subscribers. Outside component initialisation it registers no teardown and the caller owns `destroy()`.
+- `createStopwatch` ties `destroy()` to `onDestroy` when owning, **not** to last-unsubscribe: a store may be subscribed and unsubscribed repeatedly, and a stopwatch may legitimately run with zero subscribers. Outside component initialisation it registers no teardown and the caller owns `destroy()`. When borrowing, skip `onDestroy` teardown of the core instance.
 
 ### Vue (`@watchstop/vue`)
 
 - Composable returns a `ref` (or shallow ref) updated from `subscribe`, cleaned up with `onScopeDispose`.
 - Initial `ref` value from `get()`.
-- `useStopwatch` registers a second `onScopeDispose` for `destroy()`, after the unsubscribe.
+- When owning, `useStopwatch` registers a second `onScopeDispose` for `destroy()`, after the unsubscribe. When borrowing, skip destroy.
 
 ### Solid (`@watchstop/solid`)
 
 - Create a signal from `get()`; update in `subscribe`; `onCleanup` unsubscribes.
-- `useStopwatch` registers a second `onCleanup` for `destroy()`, after the unsubscribe.
+- When owning, `useStopwatch` registers a second `onCleanup` for `destroy()`, after the unsubscribe. When borrowing, skip destroy.
 
 ### Angular (`@watchstop/angular`)
 
 ```ts
-type InjectStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type InjectStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -247,14 +255,14 @@ declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBin
 
 - Bridge `Store` → Angular **signal** (writable internally, exposed via `asReadonly`). Sync `running` from `stopwatch.running` inside the existing `subscribe` path.
 - Must run in an injection context (`inject` / `DestroyRef`).
-- Unsubscribe / end bridging via `DestroyRef` — **not** by requiring core to know Angular.
+- Unsubscribe / end bridging via `DestroyRef` — **not** by requiring core to know Angular. Destroy the core instance on `DestroyRef` only when owning.
 - Core must **not** import `@angular/*`.
 - Implication for core: `subscribe` return value must be a plain unsubscribe function (already required).
 
 ### Qwik (`@watchstop/qwik`)
 
 ```ts
-type UseStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -271,7 +279,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 - Peer is `@qwik.dev/core` (Qwik 2), not `@builder.io/qwik`.
 - Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks. Sync `running` from `stopwatch.running` in that subscribe callback.
 - Hold the owned `Stopwatch` with `noSerialize()` on a signal holder so QRL captures are legal; expose controls as `$()` QRLs (`onClick$={start}`). For custom handlers, call methods on the exposed `stopwatch` instance instead of nesting QRL invokes.
-- Task cleanup unsubscribes and calls `destroy()`.
+- Task cleanup unsubscribes and, when owning, calls `destroy()`.
 - Keep adapter thin so core stays free of framework closures beyond user listeners.
 - Implication for core: `Stopwatch` instances are client-owned; core holds no framework callbacks beyond user listeners.
 - Package as a [Qwik library](https://qwik.dev/docs/advanced/library/) (`vite build --mode lib`, `"qwik"` field, `index.qwik.mjs`).
@@ -279,7 +287,7 @@ declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
 ### Alpine (`@watchstop/alpine`)
 
 ```ts
-type CreateStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type CreateStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
 
 type StopwatchBinding = {
   elapsed: number
@@ -298,7 +306,7 @@ declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBin
 - Alpine has no hook/inject context, so the entry point is a factory (same rationale as Svelte).
 - No plugin / `Alpine.data` registration helper — one entry point only; callers may wrap `createStopwatch()` in their own `Alpine.data` if they want a name.
 - `init` performs imperative `subscribe` (writes `elapsed` and `running` through `this` for Alpine reactivity).
-- `destroy` unsubscribes and destroys; Alpine invokes it on element removal.
+- `destroy` unsubscribes and, when owning, destroys the core instance; Alpine invokes it on element removal.
 - Implication for core: destroy/unsubscribe paths must be idempotent (already required).
 
 ## If Store is insufficient for an adapter

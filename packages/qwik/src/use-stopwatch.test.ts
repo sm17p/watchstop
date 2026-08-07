@@ -1,4 +1,4 @@
-import { createMockClock } from '@watchstop/core'
+import { createMockClock, Stopwatch } from '@watchstop/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type MockSignal<T> = {
@@ -108,5 +108,36 @@ describe('useStopwatch', () => {
     binding.start()
     clock.advance(16)
     expect(binding.stopwatch.get()).toBe(16)
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = useStopwatch({ stopwatch: shared })
+    const second = useStopwatch({ stopwatch: shared })
+
+    first.start()
+    clock.advance(16)
+    expect(first.elapsed.value).toBe(16)
+    expect(second.elapsed.value).toBe(16)
+    expect(first.stopwatch).toBe(shared)
+    expect(second.stopwatch).toBe(shared)
+  })
+
+  it('does not destroy a borrowed stopwatch when the visible task cleans up', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const binding = useStopwatch({ stopwatch: shared })
+
+    binding.start()
+    clock.advance(16)
+    expect(binding.elapsed.value).toBe(16)
+
+    for (const cleanup of cleanups) {
+      cleanup()
+    }
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
   })
 })

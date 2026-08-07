@@ -10,10 +10,9 @@ Adapter exposing `Store` as a Svelte readable store so `$` auto-subscription wor
 `createStopwatch` is the entire public API.
 
 ```ts
-type CreateStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+type CreateStopwatchOptions =
+  | { clock?: Clock; precisionMs?: number }
+  | { stopwatch: Stopwatch }
 
 type StopwatchStore = Readable<number> & {
   running: Readable<boolean>
@@ -56,8 +55,9 @@ It is named `createStopwatch`, not `fromStore` or `toStore`. `svelte/store` alre
 
 | Option | Type | Purpose |
 | --- | --- | --- |
-| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
-| `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `clock` | `Clock` | Owned mode: use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Owned mode: coarsen notify cadence — see [Options](/docs/core/options). |
+| `stopwatch` | `Stopwatch` | Borrowed mode: bind this instance; do not pass `clock` / `precisionMs`. |
 
 ### Teardown is tied to the component, not to subscriber count
 
@@ -67,11 +67,24 @@ It deliberately does **not** destroy on last-unsubscribe, which is what `svelte/
 
 Calling `createStopwatch()` outside component initialisation — at module level, for a singleton — is allowed and simply registers no automatic teardown. Call `stopwatch.stopwatch.destroy()` yourself in that case.
 
+Borrowed mode never calls `destroy()` on the shared instance.
+
 ## Sharing one stopwatch across components
 
-Not supported in v1. Each `createStopwatch()` call constructs and owns its own instance, so two components calling it get two unrelated stopwatches, and there is no supported way to wrap a stopwatch handed in as a prop or through context.
+Pass the same core instance into each store:
 
-`Stopwatch` is the only `Store` in core today, so a generic `Store<T>` → readable helper for instances the component does not own would have been speculative. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6), to be revisited when `Countdown` / `Ticker` land. Until then, share the store object a single `createStopwatch()` call returns — a module-level call registers no automatic teardown, as above, and `$store` auto-subscription works from any component that imports it.
+```svelte
+<script lang="ts">
+  import { Stopwatch } from '@watchstop/core'
+  import { createStopwatch } from '@watchstop/svelte'
+
+  const session = new Stopwatch()
+  const stopwatch = createStopwatch({ stopwatch: session })
+  const running = stopwatch.running
+</script>
+```
+
+The adapter never calls `destroy()` on a borrowed instance. Own teardown yourself when the session ends, or leave a module-level instance alive for the page lifetime.
 
 ## Contract
 

@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { createMockClock, type Clock } from '@watchstop/core'
+import { createMockClock, Stopwatch, type Clock } from '@watchstop/core'
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useStopwatch } from './use-stopwatch.js'
@@ -188,5 +188,45 @@ describe('useStopwatch', () => {
 
     expect(counting.readScheduleCount()).toBe(2)
     expect(stopwatch.get()).toBe(16)
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = renderHook(() => useStopwatch({ stopwatch: shared }))
+    const second = renderHook(() => useStopwatch({ stopwatch: shared }))
+
+    act(() => {
+      first.result.current.start()
+    })
+    act(() => {
+      clock.advance(16)
+    })
+
+    expect(first.result.current.elapsed).toBe(16)
+    expect(second.result.current.elapsed).toBe(16)
+    expect(first.result.current.stopwatch).toBe(shared)
+    expect(second.result.current.stopwatch).toBe(shared)
+  })
+
+  it('does not destroy a borrowed stopwatch on unmount', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const { result, unmount } = renderHook(() =>
+      useStopwatch({ stopwatch: shared }),
+    )
+
+    act(() => {
+      result.current.start()
+    })
+    act(() => {
+      clock.advance(16)
+    })
+    expect(result.current.elapsed).toBe(16)
+
+    unmount()
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
   })
 })

@@ -4,10 +4,17 @@ import { onDestroy } from 'svelte'
 import type { Readable, Subscriber, Unsubscriber } from 'svelte/store'
 import { toSvelteStore } from './to-svelte-store.js'
 
-export type CreateStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+export type CreateStopwatchOptions =
+  | {
+      clock?: Clock
+      precisionMs?: number
+      stopwatch?: undefined
+    }
+  | {
+      stopwatch: Stopwatch
+      clock?: never
+      precisionMs?: never
+    }
 
 export type StopwatchStore = Readable<number> & {
   running: Readable<boolean>
@@ -17,12 +24,25 @@ export type StopwatchStore = Readable<number> & {
   stopwatch: Stopwatch
 }
 
+function resolveStopwatch(options?: CreateStopwatchOptions): {
+  stopwatch: Stopwatch
+  ownsInstance: boolean
+} {
+  if (options?.stopwatch !== undefined) {
+    return { stopwatch: options.stopwatch, ownsInstance: false }
+  }
+  return {
+    stopwatch: new Stopwatch(options?.clock, {
+      precisionMs: options?.precisionMs,
+    }),
+    ownsInstance: true,
+  }
+}
+
 export function createStopwatch(
   options?: CreateStopwatchOptions,
 ): StopwatchStore {
-  const stopwatch = new Stopwatch(options?.clock, {
-    precisionMs: options?.precisionMs,
-  })
+  const { stopwatch, ownsInstance } = resolveStopwatch(options)
   const { subscribe } = toSvelteStore(stopwatch)
   const running: Readable<boolean> = {
     subscribe(listener: Subscriber<boolean>): Unsubscriber {
@@ -33,7 +53,9 @@ export function createStopwatch(
     },
   }
 
-  destroyWithOwningComponent(stopwatch)
+  if (ownsInstance) {
+    destroyWithOwningComponent(stopwatch)
+  }
 
   return {
     subscribe,

@@ -38,12 +38,23 @@ const wholeSeconds = new Stopwatch(createMockClock(), { precisionMs: 1000 })
 
 Framework adapters that show `elapsed` re-render on each notify. Omitting `precisionMs` under `createBrowserClock` means roughly 60 updates per second; `{ precisionMs: 1000 }` moves updates toward once per second. Keep fine-grained reads in the smallest possible component when you still need them.
 
+## Adapter `stopwatch` (shared instance)
+
+Not part of core `StopwatchOptions`. Framework adapters accept an optional `stopwatch` on their options object to **borrow** an existing `Stopwatch`:
+
+- Bind `get` / `subscribe` / controls to that instance
+- Do **not** construct a second stopwatch
+- Do **not** call `destroy()` on teardown
+
+`clock` and `precisionMs` apply only when the adapter constructs (owned mode). They are mutually exclusive with `stopwatch` (TypeScript discriminant).
+
+See framework pages and [issue #6](https://github.com/sm17p/watchstop/issues/6).
+
 ## Related work
 
 Not documented here until shipped:
 
 - [Visibility-aware suspend](https://github.com/sm17p/watchstop/issues/12) — candidate future `StopwatchOptions` or Browser default
-- [Shared / non-owned instance](https://github.com/sm17p/watchstop/issues/6) — adapter options (`stopwatch`), not core `StopwatchOptions`
 - [Shared scheduler](https://github.com/sm17p/watchstop/issues/11) — mostly “pass one shared `clock`”; Architecture + Stopwatch when chosen
 
 Parent tracking: [notification cost](https://github.com/sm17p/watchstop/issues/7).

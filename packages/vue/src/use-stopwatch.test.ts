@@ -1,4 +1,4 @@
-import { createMockClock, type Clock } from '@watchstop/core'
+import { createMockClock, Stopwatch, type Clock } from '@watchstop/core'
 import { effectScope, type EffectScope } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { useStopwatch, type StopwatchBinding } from './use-stopwatch.js'
@@ -96,5 +96,52 @@ describe('useStopwatch', () => {
     binding.start()
     clock.advance(16)
     expect(binding.stopwatch.get()).toBe(16)
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const firstScope = effectScope()
+    const secondScope = effectScope()
+    let first: StopwatchBinding | undefined
+    let second: StopwatchBinding | undefined
+    firstScope.run(() => {
+      first = useStopwatch({ stopwatch: shared })
+    })
+    secondScope.run(() => {
+      second = useStopwatch({ stopwatch: shared })
+    })
+    if (first === undefined || second === undefined) {
+      throw new Error('effect scope did not run the composable')
+    }
+
+    first.start()
+    clock.advance(16)
+    expect(first.elapsed.value).toBe(16)
+    expect(second.elapsed.value).toBe(16)
+    expect(first.stopwatch).toBe(shared)
+    expect(second.stopwatch).toBe(shared)
+  })
+
+  it('does not destroy a borrowed stopwatch when the scope stops', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const scope = effectScope()
+    let binding: StopwatchBinding | undefined
+    scope.run(() => {
+      binding = useStopwatch({ stopwatch: shared })
+    })
+    if (binding === undefined) {
+      throw new Error('effect scope did not run the composable')
+    }
+
+    binding.start()
+    clock.advance(16)
+    expect(binding.elapsed.value).toBe(16)
+
+    scope.stop()
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
   })
 })
