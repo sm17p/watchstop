@@ -37,6 +37,9 @@ importers:
       '@orama/orama':
         specifier: ^3.1.18
         version: 3.1.18
+      '@watchstop/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       cnfast:
         specifier: ^0.0.8
         version: 0.0.8
