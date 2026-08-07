@@ -10,10 +10,9 @@ Alpine has no hook or inject context, so the entry point is a **factory** — th
 `createStopwatch` is the entire public API.
 
 ```ts
-type CreateStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+type CreateStopwatchOptions =
+  | { clock?: Clock; precisionMs?: number }
+  | { stopwatch: Stopwatch }
 
 type StopwatchBinding = {
   elapsed: number
@@ -65,12 +64,24 @@ Alpine.data('timer', () => createStopwatch())
 
 | Option | Type | Purpose |
 | --- | --- | --- |
-| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
-| `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `clock` | `Clock` | Owned mode: use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Owned mode: coarsen notify cadence — see [Options](/docs/core/options). |
+| `stopwatch` | `Stopwatch` | Borrowed mode: bind this instance; do not pass `clock` / `precisionMs`. |
 
 ## Sharing one stopwatch across components
 
-Not supported in v1. Each `createStopwatch()` call constructs and owns its own instance. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6).
+Pass the same core instance into each factory:
+
+```js
+import { Stopwatch } from '@watchstop/core'
+import { createStopwatch } from '@watchstop/alpine'
+
+const session = new Stopwatch()
+
+Alpine.data('sessionChip', () => createStopwatch({ stopwatch: session }))
+```
+
+The adapter never calls `destroy()` on a borrowed instance — Alpine's data `destroy` still unsubscribes, but leaves the shared stopwatch intact. Own teardown yourself when the session ends, or leave a module-level instance alive for the page lifetime.
 
 ## Why a factory (not a hook)
 

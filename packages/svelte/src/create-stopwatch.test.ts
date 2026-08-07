@@ -1,4 +1,4 @@
-import { createMockClock, type Clock } from '@watchstop/core'
+import { createMockClock, Stopwatch, type Clock } from '@watchstop/core'
 import { flushSync, mount, unmount } from 'svelte'
 import { describe, expect, it, vi } from 'vitest'
 import { createStopwatch, type StopwatchStore } from './create-stopwatch.js'
@@ -10,22 +10,26 @@ type MountedFixture = {
   store: StopwatchStore
 }
 
-function mountFixture(clock: Clock): MountedFixture {
+function mountFixture(clock: Clock, borrowed?: Stopwatch): MountedFixture {
   const target = document.createElement('div')
   document.body.append(target)
 
   let store: StopwatchStore | undefined
+  const context = new Map<string, unknown>([
+    ['clock', clock],
+    [
+      'publishStopwatch',
+      (value: StopwatchStore): void => {
+        store = value
+      },
+    ],
+  ])
+  if (borrowed !== undefined) {
+    context.set('stopwatch', borrowed)
+  }
   const component = mount(StopwatchFixture, {
     target,
-    context: new Map<string, unknown>([
-      ['clock', clock],
-      [
-        'publishStopwatch',
-        (value: StopwatchStore): void => {
-          store = value
-        },
-      ],
-    ]),
+    context,
   })
 
   if (store === undefined) {
@@ -143,5 +147,84 @@ describe('createStopwatch', () => {
     expect(store.stopwatch.get()).toBe(16)
 
     target.remove()
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = createStopwatch({ stopwatch: shared })
+    const second = createStopwatch({ stopwatch: shared })
+    const firstElapsed: number[] = []
+    const secondElapsed: number[] = []
+    const unsubscribeFirst = first.subscribe((value) => {
+      firstElapsed.push(value)
+    })
+    const unsubscribeSecond = second.subscribe((value) => {
+      secondElapsed.push(value)
+    })
+
+    clock.advance(64)
+    expect(firstElapsed).toEqual([0])
+    expect(secondElapsed).toEqual([0])
+
+    first.start()
+    clock.advance(16)
+    expect(firstElapsed).toEqual([0, 0, 16])
+    expect(secondElapsed).toEqual([0, 0, 16])
+    expect(first.stopwatch).toBe(shared)
+    expect(second.stopwatch).toBe(shared)
+
+    unsubscribeFirst()
+    unsubscribeSecond()
+  })
+
+  it('does not destroy a borrowed stopwatch when the component unmounts', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const first = mountFixture(clock, shared)
+    const second = mountFixture(clock, shared)
+
+    expect(first.target.textContent).toBe('0')
+    expect(second.target.textContent).toBe('0')
+    expect(bridgedListeners).toBe(2)
+
+    clock.advance(64)
+    flushSync()
+    expect(first.target.textContent).toBe('0')
+    expect(second.target.textContent).toBe('0')
+
+    first.store.start()
+    clock.advance(16)
+    flushSync()
+    expect(first.target.textContent).toBe('16')
+    expect(second.target.textContent).toBe('16')
+
+    unmount(first.component)
+    flushSync()
+    expect(bridgedListeners).toBe(1)
+
+    shared.start()
+    clock.advance(16)
+    flushSync()
+
+    expect(second.target.textContent).toBe('32')
+    expect(shared.get()).toBe(32)
+
+    unmount(second.component)
+    flushSync()
+    expect(bridgedListeners).toBe(0)
+
+    first.target.remove()
+    second.target.remove()
   })
 })

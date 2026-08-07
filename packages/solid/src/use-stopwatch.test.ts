@@ -1,4 +1,4 @@
-import { createMockClock, type Clock } from '@watchstop/core'
+import { createMockClock, Stopwatch, type Clock } from '@watchstop/core'
 import { createRoot } from 'solid-js'
 import { describe, expect, it, vi } from 'vitest'
 import { useStopwatch, type StopwatchBinding } from './use-stopwatch.js'
@@ -91,5 +91,59 @@ describe('useStopwatch', () => {
     binding.start()
     clock.advance(16)
     expect(binding.stopwatch.get()).toBe(16)
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = createRoot((disposeRoot) => ({
+      disposeRoot,
+      binding: useStopwatch({ stopwatch: shared }),
+    }))
+    const second = createRoot((disposeRoot) => ({
+      disposeRoot,
+      binding: useStopwatch({ stopwatch: shared }),
+    }))
+
+    first.binding.start()
+    clock.advance(16)
+    expect(first.binding.elapsed()).toBe(16)
+    expect(second.binding.elapsed()).toBe(16)
+    expect(first.binding.stopwatch).toBe(shared)
+    expect(second.binding.stopwatch).toBe(shared)
+
+    first.disposeRoot()
+    second.disposeRoot()
+  })
+
+  it('does not destroy a borrowed stopwatch when the root disposes', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = createRoot((disposeRoot) => ({
+      disposeRoot,
+      binding: useStopwatch({ stopwatch: shared }),
+    }))
+    const second = createRoot((disposeRoot) => ({
+      disposeRoot,
+      binding: useStopwatch({ stopwatch: shared }),
+    }))
+
+    clock.advance(64)
+    expect(first.binding.elapsed()).toBe(0)
+    expect(second.binding.elapsed()).toBe(0)
+
+    first.binding.start()
+    clock.advance(16)
+    expect(first.binding.elapsed()).toBe(16)
+    expect(second.binding.elapsed()).toBe(16)
+
+    first.disposeRoot()
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
+    expect(first.binding.elapsed()).toBe(16)
+    expect(second.binding.elapsed()).toBe(32)
+
+    second.disposeRoot()
   })
 })

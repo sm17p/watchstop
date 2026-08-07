@@ -1,4 +1,4 @@
-import { createMockClock } from '@watchstop/core'
+import { createMockClock, Stopwatch } from '@watchstop/core'
 import Alpine from 'alpinejs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -164,5 +164,46 @@ describe('createStopwatch', () => {
 
     expect(listener).not.toHaveBeenCalled()
     expect(binding.stopwatch.get()).toBe(16)
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = createStopwatch({ stopwatch: shared })
+    const second = createStopwatch({ stopwatch: shared })
+    first.init()
+    second.init()
+
+    clock.advance(64)
+    expect(first.elapsed).toBe(0)
+    expect(second.elapsed).toBe(0)
+
+    first.start()
+    clock.advance(16)
+    expect(first.elapsed).toBe(16)
+    expect(second.elapsed).toBe(16)
+    expect(first.stopwatch).toBe(shared)
+    expect(second.stopwatch).toBe(shared)
+  })
+
+  it('does not destroy a borrowed stopwatch on binding destroy', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = createStopwatch({ stopwatch: shared })
+    const second = createStopwatch({ stopwatch: shared })
+    first.init()
+    second.init()
+
+    first.start()
+    clock.advance(16)
+    expect(first.elapsed).toBe(16)
+    expect(second.elapsed).toBe(16)
+
+    first.destroy()
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
+    expect(first.elapsed).toBe(16)
+    expect(second.elapsed).toBe(32)
   })
 })

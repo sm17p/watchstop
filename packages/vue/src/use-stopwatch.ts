@@ -3,10 +3,17 @@ import type { Clock } from '@watchstop/core'
 import { onScopeDispose, shallowRef, type ShallowRef } from 'vue'
 import { useStore } from './use-store.js'
 
-export type UseStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+export type UseStopwatchOptions =
+  | {
+      clock?: Clock
+      precisionMs?: number
+      stopwatch?: undefined
+    }
+  | {
+      stopwatch: Stopwatch
+      clock?: never
+      precisionMs?: never
+    }
 
 export type StopwatchBinding = {
   elapsed: Readonly<ShallowRef<number>>
@@ -17,10 +24,23 @@ export type StopwatchBinding = {
   stopwatch: Stopwatch
 }
 
+function resolveStopwatch(options?: UseStopwatchOptions): {
+  stopwatch: Stopwatch
+  ownsInstance: boolean
+} {
+  if (options?.stopwatch !== undefined) {
+    return { stopwatch: options.stopwatch, ownsInstance: false }
+  }
+  return {
+    stopwatch: new Stopwatch(options?.clock, {
+      precisionMs: options?.precisionMs,
+    }),
+    ownsInstance: true,
+  }
+}
+
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock, {
-    precisionMs: options?.precisionMs,
-  })
+  const { stopwatch, ownsInstance } = resolveStopwatch(options)
   const elapsed = useStore(stopwatch)
   const running = shallowRef(stopwatch.running)
   const unsubscribeRunning = stopwatch.subscribe(() => {
@@ -28,9 +48,11 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   })
 
   onScopeDispose(unsubscribeRunning)
-  onScopeDispose(() => {
-    stopwatch.destroy()
-  })
+  if (ownsInstance) {
+    onScopeDispose(() => {
+      stopwatch.destroy()
+    })
+  }
 
   return {
     elapsed,
