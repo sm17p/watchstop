@@ -63,6 +63,7 @@ run = "tsgo -b"
 
 [tasks.docs]
 description = "Build the docs app"
+depends = ["build"]
 run = "pnpm --filter @watchstop/docs build"
 
 [tasks."docs:dev"]
@@ -71,6 +72,7 @@ run = "pnpm --filter @watchstop/docs dev"
 
 [tasks."docs:deploy"]
 description = "Build and deploy docs to Cloudflare Pages"
+depends = ["build"]
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
