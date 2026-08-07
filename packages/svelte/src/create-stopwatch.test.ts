@@ -1,4 +1,4 @@
-import { createMockClock, type Clock } from '@watchstop/core'
+import { createMockClock, Stopwatch, type Clock } from '@watchstop/core'
 import { flushSync, mount, unmount } from 'svelte'
 import { describe, expect, it, vi } from 'vitest'
 import { createStopwatch, type StopwatchStore } from './create-stopwatch.js'
@@ -143,5 +143,33 @@ describe('createStopwatch', () => {
     expect(store.stopwatch.get()).toBe(16)
 
     target.remove()
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = createStopwatch({ stopwatch: shared })
+    const second = createStopwatch({ stopwatch: shared })
+
+    first.start()
+    clock.advance(16)
+    expect(first.stopwatch.get()).toBe(16)
+    expect(second.stopwatch.get()).toBe(16)
+    expect(first.stopwatch).toBe(shared)
+    expect(second.stopwatch).toBe(shared)
+  })
+
+  it('does not destroy a borrowed stopwatch outside component teardown', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const store = createStopwatch({ stopwatch: shared })
+
+    store.start()
+    clock.advance(16)
+    expect(store.stopwatch.get()).toBe(16)
+
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
   })
 })

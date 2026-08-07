@@ -3,10 +3,17 @@ import type { Clock } from '@watchstop/core'
 import { DestroyRef, inject, signal, type Signal } from '@angular/core'
 import { useStore } from './use-store.js'
 
-export type InjectStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+export type InjectStopwatchOptions =
+  | {
+      clock?: Clock
+      precisionMs?: number
+      stopwatch?: undefined
+    }
+  | {
+      stopwatch: Stopwatch
+      clock?: never
+      precisionMs?: never
+    }
 
 export type StopwatchBinding = {
   elapsed: Signal<number>
@@ -17,12 +24,25 @@ export type StopwatchBinding = {
   stopwatch: Stopwatch
 }
 
+function resolveStopwatch(options?: InjectStopwatchOptions): {
+  stopwatch: Stopwatch
+  ownsInstance: boolean
+} {
+  if (options?.stopwatch !== undefined) {
+    return { stopwatch: options.stopwatch, ownsInstance: false }
+  }
+  return {
+    stopwatch: new Stopwatch(options?.clock, {
+      precisionMs: options?.precisionMs,
+    }),
+    ownsInstance: true,
+  }
+}
+
 export function injectStopwatch(
   options?: InjectStopwatchOptions,
 ): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock, {
-    precisionMs: options?.precisionMs,
-  })
+  const { stopwatch, ownsInstance } = resolveStopwatch(options)
   const elapsed = useStore(stopwatch)
   const runningValue = signal(stopwatch.running)
   const unsubscribeRunning = stopwatch.subscribe(() => {
@@ -30,9 +50,11 @@ export function injectStopwatch(
   })
 
   inject(DestroyRef).onDestroy(unsubscribeRunning)
-  inject(DestroyRef).onDestroy(() => {
-    stopwatch.destroy()
-  })
+  if (ownsInstance) {
+    inject(DestroyRef).onDestroy(() => {
+      stopwatch.destroy()
+    })
+  }
 
   return {
     elapsed,

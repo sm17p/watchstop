@@ -1,4 +1,4 @@
-import { createMockClock, type Clock } from '@watchstop/core'
+import { createMockClock, Stopwatch, type Clock } from '@watchstop/core'
 import {
   createEnvironmentInjector,
   EnvironmentInjector,
@@ -138,5 +138,47 @@ describe('injectStopwatch', () => {
     binding.start()
     clock.advance(16)
     expect(binding.elapsed()).toBe(16)
+  })
+
+  it('shares one stopwatch across two borrowed bindings', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const first = runInInjectionContext(
+      TestBed.inject(EnvironmentInjector),
+      () => injectStopwatch({ stopwatch: shared }),
+    )
+    const second = runInInjectionContext(
+      TestBed.inject(EnvironmentInjector),
+      () => injectStopwatch({ stopwatch: shared }),
+    )
+
+    first.start()
+    clock.advance(16)
+    expect(first.elapsed()).toBe(16)
+    expect(second.elapsed()).toBe(16)
+    expect(first.stopwatch).toBe(shared)
+    expect(second.stopwatch).toBe(shared)
+  })
+
+  it('does not destroy a borrowed stopwatch when DestroyRef cleans up', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const parent = TestBed.inject(EnvironmentInjector)
+    const host = createEnvironmentInjector(
+      [provideZonelessChangeDetection()],
+      parent,
+    )
+    const binding = runInInjectionContext(host, () =>
+      injectStopwatch({ stopwatch: shared }),
+    )
+
+    binding.start()
+    clock.advance(16)
+    expect(binding.elapsed()).toBe(16)
+
+    host.destroy()
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
   })
 })

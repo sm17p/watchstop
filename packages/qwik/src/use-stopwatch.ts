@@ -10,10 +10,17 @@ import {
   type Signal,
 } from '@qwik.dev/core'
 
-export type UseStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+export type UseStopwatchOptions =
+  | {
+      clock?: Clock
+      precisionMs?: number
+      stopwatch?: undefined
+    }
+  | {
+      stopwatch: Stopwatch
+      clock?: never
+      precisionMs?: never
+    }
 
 export type StopwatchBinding = {
   elapsed: Signal<number>
@@ -26,19 +33,26 @@ export type StopwatchBinding = {
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   const instance = useSignal<NoSerialize<Stopwatch>>()
+  const ownsInstance = useSignal(true)
   if (instance.value === undefined) {
-    instance.value = noSerialize(
-      new Stopwatch(options?.clock, { precisionMs: options?.precisionMs }),
-    )
+    if (options?.stopwatch !== undefined) {
+      instance.value = noSerialize(options.stopwatch)
+      ownsInstance.value = false
+    } else {
+      instance.value = noSerialize(
+        new Stopwatch(options?.clock, { precisionMs: options?.precisionMs }),
+      )
+      ownsInstance.value = true
+    }
   }
 
-  const ownedStopwatch = instance.value
-  if (ownedStopwatch === undefined) {
+  const boundStopwatch = instance.value
+  if (boundStopwatch === undefined) {
     throw new Error('@watchstop/qwik: Stopwatch could not be created')
   }
 
-  const elapsed = useSignal(ownedStopwatch.get())
-  const running = useSignal(ownedStopwatch.running)
+  const elapsed = useSignal(boundStopwatch.get())
+  const running = useSignal(boundStopwatch.running)
 
   useVisibleTask$(({ cleanup }) => {
     const current = instance.value
@@ -51,7 +65,9 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     })
     cleanup(() => {
       unsubscribe()
-      current.destroy()
+      if (ownsInstance.value) {
+        current.destroy()
+      }
     })
   })
 
@@ -67,6 +83,6 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     reset: $((): void => {
       instance.value?.reset()
     }),
-    stopwatch: ownedStopwatch,
+    stopwatch: boundStopwatch,
   }
 }

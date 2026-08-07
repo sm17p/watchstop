@@ -3,10 +3,17 @@ import type { Clock } from '@watchstop/core'
 import { createSignal, onCleanup, type Accessor } from 'solid-js'
 import { useStore } from './use-store.js'
 
-export type UseStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+export type UseStopwatchOptions =
+  | {
+      clock?: Clock
+      precisionMs?: number
+      stopwatch?: undefined
+    }
+  | {
+      stopwatch: Stopwatch
+      clock?: never
+      precisionMs?: never
+    }
 
 export type StopwatchBinding = {
   elapsed: Accessor<number>
@@ -17,10 +24,23 @@ export type StopwatchBinding = {
   stopwatch: Stopwatch
 }
 
+function resolveStopwatch(options?: UseStopwatchOptions): {
+  stopwatch: Stopwatch
+  ownsInstance: boolean
+} {
+  if (options?.stopwatch !== undefined) {
+    return { stopwatch: options.stopwatch, ownsInstance: false }
+  }
+  return {
+    stopwatch: new Stopwatch(options?.clock, {
+      precisionMs: options?.precisionMs,
+    }),
+    ownsInstance: true,
+  }
+}
+
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock, {
-    precisionMs: options?.precisionMs,
-  })
+  const { stopwatch, ownsInstance } = resolveStopwatch(options)
   const elapsed = useStore(stopwatch)
   const [running, setRunning] = createSignal(stopwatch.running)
   onCleanup(
@@ -29,9 +49,11 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     }),
   )
 
-  onCleanup(() => {
-    stopwatch.destroy()
-  })
+  if (ownsInstance) {
+    onCleanup(() => {
+      stopwatch.destroy()
+    })
+  }
 
   return {
     elapsed,
