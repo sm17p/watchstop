@@ -1,10 +1,17 @@
 import { Stopwatch } from '@watchstop/core'
 import type { Clock } from '@watchstop/core'
 
-export type CreateStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+export type CreateStopwatchOptions =
+  | {
+      clock?: Clock
+      precisionMs?: number
+      stopwatch?: undefined
+    }
+  | {
+      stopwatch: Stopwatch
+      clock?: never
+      precisionMs?: never
+    }
 
 export type StopwatchBinding = {
   elapsed: number
@@ -17,12 +24,25 @@ export type StopwatchBinding = {
   destroy: () => void
 }
 
+function resolveStopwatch(options?: CreateStopwatchOptions): {
+  stopwatch: Stopwatch
+  ownsInstance: boolean
+} {
+  if (options?.stopwatch !== undefined) {
+    return { stopwatch: options.stopwatch, ownsInstance: false }
+  }
+  return {
+    stopwatch: new Stopwatch(options?.clock, {
+      precisionMs: options?.precisionMs,
+    }),
+    ownsInstance: true,
+  }
+}
+
 export function createStopwatch(
   options?: CreateStopwatchOptions,
 ): StopwatchBinding {
-  const stopwatch = new Stopwatch(options?.clock, {
-    precisionMs: options?.precisionMs,
-  })
+  const { stopwatch, ownsInstance } = resolveStopwatch(options)
   let unsubscribe = (): void => {}
 
   const binding: StopwatchBinding = {
@@ -48,7 +68,9 @@ export function createStopwatch(
     destroy(): void {
       unsubscribe()
       unsubscribe = (): void => {}
-      stopwatch.destroy()
+      if (ownsInstance) {
+        stopwatch.destroy()
+      }
     },
   }
 

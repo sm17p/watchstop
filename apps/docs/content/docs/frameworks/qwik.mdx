@@ -14,10 +14,9 @@ The owned `Stopwatch` is held with [`noSerialize()`](https://qwik.dev/docs/advan
 `useStopwatch` is the entire public API. The name follows Qwik's hooks idiom (same as React / Vue / Solid).
 
 ```ts
-type UseStopwatchOptions = {
-  clock?: Clock
-  precisionMs?: number
-}
+type UseStopwatchOptions =
+  | { clock?: Clock; precisionMs?: number }
+  | { stopwatch: Stopwatch }
 
 type StopwatchBinding = {
   elapsed: Signal<number>
@@ -63,12 +62,30 @@ export const Timer = component$(() => {
 
 | Option | Type | Purpose |
 | --- | --- | --- |
-| `clock` | `Clock` | Use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
-| `precisionMs` | `number` | Coarsen notify cadence — see [Options](/docs/core/options). |
+| `clock` | `Clock` | Owned mode: use this clock instead of `detectClock()`. Pass `createMockClock()` in tests. |
+| `precisionMs` | `number` | Owned mode: coarsen notify cadence — see [Options](/docs/core/options). |
+| `stopwatch` | `Stopwatch` | Borrowed mode: bind this instance; do not pass `clock` / `precisionMs`. |
 
 ## Sharing one stopwatch across components
 
-Not supported in v1. Each `useStopwatch()` call constructs and owns its own instance. Tracked in [issue #6](https://github.com/sm17p/watchstop/issues/6).
+Pass the same core instance into each hook:
+
+```tsx
+import { component$ } from '@qwik.dev/core'
+import { Stopwatch } from '@watchstop/core'
+import { useStopwatch } from '@watchstop/qwik'
+
+const session = new Stopwatch()
+
+export const SessionChip = component$(() => {
+  const { elapsed, running, start, stop, reset } = useStopwatch({
+    stopwatch: session,
+  })
+  // ...
+})
+```
+
+The adapter never calls `destroy()` on a borrowed instance. Own teardown yourself when the session ends, or leave a module-level instance alive for the page lifetime.
 
 ## Contract
 
