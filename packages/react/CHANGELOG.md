@@ -1,5 +1,15 @@
 # @watchstop/react
 
+## 1.3.0
+
+### Minor Changes
+
+- f8cd165: Add optional `stopwatch` on adapter options to bind a shared instance without owning or destroying it.
+
+### Patch Changes
+
+- f8cd165: Fix infinite update loops when rendering a borrowed shared stopwatch.
+
 ## 1.2.1
 
 ### Patch Changes
