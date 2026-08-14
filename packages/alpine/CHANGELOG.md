@@ -1,5 +1,11 @@
 # @watchstop/alpine
 
+## 1.3.0
+
+### Minor Changes
+
+- f8cd165: Add optional `stopwatch` on adapter options to bind a shared instance without owning or destroying it.
+
 ## 1.2.1
 
 ### Patch Changes
