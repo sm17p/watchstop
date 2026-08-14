@@ -1,51 +1,46 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Stopwatch } from '@watchstop/core'
-
-const sessionStopwatch = new Stopwatch(undefined, { precisionMs: 100 })
+import { useEffect } from 'react'
+import { useStopwatch } from '@watchstop/react'
+import { sessionStopwatch } from '@/components/session-stopwatch-store'
+import { formatClockParts } from '@/components/watch-skins/format-elapsed'
 
 export function SessionStopwatch() {
-  const [elapsed, setElapsed] = useState(() => sessionStopwatch.get())
-  const [running, setRunning] = useState(() => sessionStopwatch.running)
+  const { elapsed, running, start, stop, reset } = useStopwatch({
+    stopwatch: sessionStopwatch,
+  })
 
   useEffect(() => {
-    sessionStopwatch.start()
-    setElapsed(sessionStopwatch.get())
-    setRunning(sessionStopwatch.running)
-    return sessionStopwatch.subscribe(() => {
-      setElapsed(sessionStopwatch.get())
-      setRunning(sessionStopwatch.running)
-    })
-  }, [])
+    start()
+  }, [start])
+
+  const parts = formatClockParts(elapsed)
 
   const toggleRun = () => {
-    if (sessionStopwatch.running) {
-      sessionStopwatch.stop()
+    if (running) {
+      stop()
       return
     }
-    sessionStopwatch.start()
+    start()
   }
 
   return (
-    <div className="pointer-events-auto fixed end-3 top-3 z-50 flex items-center gap-2 rounded-lg border border-fd-border bg-fd-background/95 px-2.5 py-2 text-sm text-fd-foreground shadow-sm backdrop-blur-sm">
+    <div className="flex items-center gap-2 text-sm text-fd-foreground">
       <span className="font-mono text-base tabular-nums tracking-tight">
-        {Math.floor(elapsed)}
-        <span className="ms-1 text-xs text-fd-muted-foreground">ms</span>
+        {parts.minutes}:{parts.seconds}
+        <span className="text-fd-muted-foreground">.{parts.centiseconds}</span>
       </span>
       <button
         type="button"
-        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-fd-accent"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-xs font-medium hover:bg-fd-accent"
         onClick={toggleRun}
       >
         {running ? 'Stop' : 'Start'}
       </button>
       <button
         type="button"
-        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-fd-accent"
-        onClick={() => {
-          sessionStopwatch.reset()
-        }}
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-xs font-medium hover:bg-fd-accent"
+        onClick={reset}
       >
         Reset
       </button>

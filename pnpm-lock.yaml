@@ -40,6 +40,9 @@ importers:
       '@watchstop/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@watchstop/react':
+        specifier: workspace:*
+        version: link:../../packages/react
       cnfast:
         specifier: ^0.0.8
         version: 0.0.8
