@@ -19,17 +19,13 @@ export function WatchGallery() {
   return (
     <section
       aria-label="Watch gallery"
-      className="relative w-full"
+      className="grid w-full gap-3 md:grid-cols-2"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(251,146,60,0.08),transparent_55%),linear-gradient(to_bottom,transparent,rgba(0,0,0,0.03))]"
-      />
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-        <TerminalSkin elapsed={elapsed} running={running} />
+      <div className="md:col-span-2">
         <ChronographSkin elapsed={elapsed} running={running} />
-        <SplitFlapSkin elapsed={elapsed} running={running} />
       </div>
+      <TerminalSkin elapsed={elapsed} running={running} />
+      <SplitFlapSkin elapsed={elapsed} running={running} />
     </section>
   )
 }

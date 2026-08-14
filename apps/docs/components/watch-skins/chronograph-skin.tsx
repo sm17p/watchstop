@@ -36,7 +36,7 @@ export function ChronographSkin({ elapsed, running }: SkinProps) {
       </p>
       <svg
         viewBox="0 0 120 120"
-        className="mt-2 size-36 text-fd-foreground"
+        className="mt-2 size-48 text-fd-foreground sm:size-56"
         aria-hidden
       >
         <circle

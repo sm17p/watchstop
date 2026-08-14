@@ -25,21 +25,21 @@ export function SessionStopwatch() {
   }
 
   return (
-    <div className="pointer-events-auto fixed end-3 top-3 z-50 flex items-center gap-2 rounded-lg border border-fd-border bg-fd-background/95 px-2.5 py-2 text-sm text-fd-foreground shadow-sm backdrop-blur-sm">
+    <div className="flex items-center gap-2 text-sm text-fd-foreground">
       <span className="font-mono text-base tabular-nums tracking-tight">
         {parts.minutes}:{parts.seconds}
         <span className="text-fd-muted-foreground">.{parts.centiseconds}</span>
       </span>
       <button
         type="button"
-        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-fd-accent"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-xs font-medium hover:bg-fd-accent"
         onClick={toggleRun}
       >
         {running ? 'Stop' : 'Start'}
       </button>
       <button
         type="button"
-        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-fd-accent"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-xs font-medium hover:bg-fd-accent"
         onClick={reset}
       >
         Reset
