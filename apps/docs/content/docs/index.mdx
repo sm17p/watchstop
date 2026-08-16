@@ -7,6 +7,25 @@ Welcome to Watchstop.
 
 Core docs are the **source of truth**. Implement packages from those pages, not from guesses.
 
+## Elapsed math
+
+Elapsed is millisecond subtraction of monotonic `Clock.now()` values, not a frame count. A pause must not add idle wall-clock. Closed runs live in `accumulated`. The open run is only `now - startTime`.
+
+<ElapsedMath />
+
+`stop` folds the open segment into `accumulated` so wall-clock can keep moving without counting pause. The next `start` only sets a new `startTime`. Shared clocks share one `schedule` loop. Each stopwatch still owns its own `accumulated` and `startTime`. `precisionMs` coarsens when subscribers fire (`floor(elapsed / precisionMs)`). It does not change `get()`.
+
+| Variable | What it is | Why it exists |
+| --- | --- | --- |
+| `clock.now()` | Monotonic ms from `Clock` | Time source. Comparable by subtraction. |
+| `startTime` | `now` at last `start` | Anchor for the open segment. Unset while stopped. |
+| `accumulated` | Sum of closed segments | Idle after `stop` must not count. |
+| `elapsed` | `get()` / subscriber value | Running adds the open segment. Stopped is `accumulated` only. |
+| `running` | Open segment flag | UI and scheduling. Same as `startTime` being set. |
+| `precisionMs` | Notify bucket size | Coarsens when listeners fire. Does not change `get()`. |
+
+Normative methods: [Stopwatch](/docs/core/stopwatch). Notify buckets: [Options](/docs/core/options). `now()` units: [Clock](/docs/core/clock).
+
 ## Start here
 
 - [Architecture](/docs/architecture) — Clock → Store → Stopwatch
