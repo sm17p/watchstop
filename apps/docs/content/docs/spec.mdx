@@ -1,0 +1,279 @@
+---
+title: Spec
+description: Implementer index — public names, packaging, and adapter constraints.
+---
+
+This page is the **implementation index** for `@watchstop/core` and framework adapters. Behavior is defined on Core, Runtimes, and Frameworks pages; tests are derived from those pages. Consumer usage for coding agents lives on [Agents](/docs/agents) and root `AGENTS.md`.
+
+Also read: [Architecture](/docs/architecture), [Clock](/docs/core/clock), [Store](/docs/core/store), [Stopwatch](/docs/core/stopwatch), [Options](/docs/core/options), [Browser](/docs/runtimes/browser), [Timer](/docs/runtimes/timer), [Testing](/docs/runtimes/testing).
+
+Machine indexes: [`/llms.txt`](/llms.txt), [`/llms-full.txt`](/llms-full.txt).
+
+## Implementation order
+
+1. Scaffold `packages/core` with **tsdown** (`format: ['esm','cjs']`, `dts: true`) and Vitest.
+2. Implement clocks: `createMockClock`, `createBrowserClock`, `createTimerClock`, `detectClock`.
+3. Implement `Stopwatch`.
+4. Export public API from package entry exactly as named below. **Also** add a `packages/core` tsconfig and register it in the root `tsconfig.json` `references` array (root refs are empty today; `pnpm typecheck` / `tsgo -b` needs the project reference). Public APIs need **explicit return types** because `tsconfig.base.json` sets `isolatedDeclarations: true`.
+5. Typecheck with **TS7 (`tsgo`)**; `pnpm test` + `pnpm build` green. Dev dependency `@typescript/native-preview` is pinned in root `package.json` (not `latest`).
+6. Only then framework adapters.
+
+## Exact public names
+
+```ts
+interface Clock {
+  now(): number
+  schedule(callback: () => void): unknown
+  cancel(handle: unknown): void
+}
+
+interface Store<T> {
+  get(): T
+  subscribe(listener: (value: T) => void): () => void
+}
+
+type MockClockOptions = {
+  frameDelay?: number
+}
+
+interface MockClock extends Clock {
+  advance(ms: number): void
+}
+
+type TimerClockOptions = {
+  intervalMs?: number
+}
+
+declare class Stopwatch implements Store<number> {
+  constructor(clock?: Clock, options?: StopwatchOptions)
+  get running(): boolean
+  start(): void
+  stop(): void
+  reset(): void
+  get(): number
+  subscribe(listener: (elapsed: number) => void): () => void
+  destroy(): void
+}
+
+type StopwatchOptions = {
+  precisionMs?: number
+}
+
+declare function createBrowserClock(): Clock
+declare function createTimerClock(options?: TimerClockOptions): Clock
+declare function createMockClock(options?: MockClockOptions): MockClock
+declare function detectClock(): Clock
+```
+
+Do not rename to `elapsed`, `onTick`, `addEventListener`, etc.
+
+## Packaging
+
+Package name is `@watchstop/core`. `"type": "module"` with `exports` for `types` / `import` / `require`. Built with tsdown; declarations emitted; public exports have explicit return types (`isolatedDeclarations`). Vitest covers Core, Runtimes, and Options contracts via `createMockClock`.
+
+## Adopter constraints (design pressure on Store)
+
+Adapters must stay thin: **only** construct a `Stopwatch` and bridge `get` / `subscribe` / `destroy` (plus exposing `start`/`stop`/`reset` if the adapter’s API includes controls). No clocks or elapsed math in adapters. Owning an instance and its teardown is allowed; reimplementing timing is not.
+
+### Exact public names (adapters)
+
+Every adapter ships exactly **one** entry point: the binding factory/hook, plus its option and return types. By default the entry point **owns** a `Stopwatch` and tears it down. Pass `stopwatch` to **borrow** an existing instance (no create, no `destroy` on teardown). That is the shared-instance path from [issue #6](https://github.com/sm17p/watchstop/issues/6).
+
+The generic `Store<T>` bridge each adapter uses internally is **not** public API. A Store-wide primitive can still land later when `Countdown` / `Ticker` exist; `stopwatch?: Stopwatch` on adapter options is enough for v1 sharing.
+
+Options are a discriminant — owned construction knobs **or** a borrowed instance, not both:
+
+```ts
+type OwnedStopwatchOptions = { clock?: Clock; precisionMs?: number }
+type BorrowedStopwatchOptions = { stopwatch: Stopwatch }
+```
+
+`@watchstop/react`:
+
+```ts
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchBinding = {
+  elapsed: number
+  running: boolean
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+`@watchstop/vue`:
+
+```ts
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchBinding = {
+  elapsed: Readonly<ShallowRef<number>>
+  running: Readonly<ShallowRef<boolean>>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+`@watchstop/solid`:
+
+```ts
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchBinding = {
+  elapsed: Accessor<number>
+  running: Accessor<boolean>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+`@watchstop/svelte`:
+
+```ts
+type CreateStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchStore = Readable<number> & {
+  running: Readable<boolean>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchStore
+```
+
+React, Vue, and Solid keep the `useStopwatch` hook / composable name their ecosystems expect. Svelte uses `createStopwatch` because `svelte/store` already exports `fromStore` / `toStore` for converting between stores and runes.
+
+### Rules for the adapter entry points
+
+- **Must not auto-start.** Construction / binding is inert until `start()`.
+- **Owned teardown is mandatory.** When the adapter constructs the instance, `destroy()` runs on unmount / scope dispose / root dispose / component destroy.
+- **Borrowed instances are never destroyed by the adapter.** Pass `stopwatch` to bind; unmount only unsubscribes.
+- **Control identities are stable** for the life of the binding, so they are safe in dependency arrays and as event handlers.
+- Expose the bound instance as `stopwatch` for callers who need to pass it elsewhere.
+- Owned options are `clock` and `precisionMs` (forwarded to `Stopwatch`). Borrowed options are only `stopwatch`. See [Options](/docs/core/options).
+
+### Packaging (adapters)
+
+- `@watchstop/core` is a **peer dependency**, not a regular dependency, plus a dev dependency so tests resolve it. Adapters import `Stopwatch` as a value, but the consumer must already own core to construct or share instances, and a regular dependency invites a second resolved copy whose `Store` type is not identical to the consumer's.
+- Framework packages stay peer dependencies as before.
+
+### React (`@watchstop/react`)
+
+- Bind with `useSyncExternalStore`.
+- **MUST NOT** pass live `store.get` / `stopwatch.get` as `getSnapshot`. Cache the value from `subscribe` (or a versioned snapshot updated only in the listener); `getSnapshot` returns that cached snapshot so it is stable between notifications.
+- Do not use `useState` + manual subscribe as the primary path.
+- SSR: initial / server snapshot may use one `get()`; must be safe without `window`.
+- `useStopwatch` creates the instance with a lazy `useRef` and destroys it in a `useEffect` cleanup when owning — **not** `useMemo`, which React may discard. Strict Mode double-invoke must rebuild and republish the instance rather than leave a destroyed or orphaned stopwatch. When borrowing, skip create/destroy.
+
+### Svelte (`@watchstop/svelte`)
+
+- Expose a readable-store shape (`subscribe` compatible with `$store` auto-subscription).
+- May wrap `Stopwatch` or implement the readable contract by delegating to `subscribe`/`get`.
+- `subscribe` must call the listener synchronously with `get()` before registering it, per Svelte's readable contract.
+- `createStopwatch` ties `destroy()` to `onDestroy` when owning, **not** to last-unsubscribe: a store may be subscribed and unsubscribed repeatedly, and a stopwatch may legitimately run with zero subscribers. Outside component initialisation it registers no teardown and the caller owns `destroy()`. When borrowing, skip `onDestroy` teardown of the core instance.
+
+### Vue (`@watchstop/vue`)
+
+- Composable returns a `ref` (or shallow ref) updated from `subscribe`, cleaned up with `onScopeDispose`.
+- Initial `ref` value from `get()`.
+- When owning, `useStopwatch` registers a second `onScopeDispose` for `destroy()`, after the unsubscribe. When borrowing, skip destroy.
+
+### Solid (`@watchstop/solid`)
+
+- Create a signal from `get()`; update in `subscribe`; `onCleanup` unsubscribes.
+- When owning, `useStopwatch` registers a second `onCleanup` for `destroy()`, after the unsubscribe. When borrowing, skip destroy.
+
+### Angular (`@watchstop/angular`)
+
+```ts
+type InjectStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchBinding = {
+  elapsed: Signal<number>
+  running: Signal<boolean>
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+}
+
+declare function injectStopwatch(options?: InjectStopwatchOptions): StopwatchBinding
+```
+
+- Bridge `Store` → Angular **signal** (writable internally, exposed via `asReadonly`). Sync `running` from `stopwatch.running` inside the existing `subscribe` path.
+- Must run in an injection context (`inject` / `DestroyRef`).
+- Unsubscribe / end bridging via `DestroyRef` — **not** by requiring core to know Angular. Destroy the core instance on `DestroyRef` only when owning.
+- Core must **not** import `@angular/*`.
+- Implication for core: `subscribe` return value must be a plain unsubscribe function (already required).
+
+### Qwik (`@watchstop/qwik`)
+
+```ts
+type UseStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchBinding = {
+  elapsed: Signal<number>
+  running: Signal<boolean>
+  start: QRL<() => void>
+  stop: QRL<() => void>
+  reset: QRL<() => void>
+  stopwatch: Stopwatch
+}
+
+declare function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding
+```
+
+- Peer is `@qwik.dev/core` (Qwik 2), not `@builder.io/qwik`.
+- Subscribe **only on the client** via `useVisibleTask$`. No SSR subscription leaks. Sync `running` from `stopwatch.running` in that subscribe callback.
+- Hold the owned `Stopwatch` with `noSerialize()` on a signal holder so QRL captures are legal; expose controls as `$()` QRLs (`onClick$={start}`). For custom handlers, call methods on the exposed `stopwatch` instance instead of nesting QRL invokes.
+- Task cleanup unsubscribes and, when owning, calls `destroy()`.
+- Keep adapter thin so core stays free of framework closures beyond user listeners.
+- Implication for core: `Stopwatch` instances are client-owned; core holds no framework callbacks beyond user listeners.
+- Package as a [Qwik library](https://qwik.dev/docs/advanced/library/) (`vite build --mode lib`, `"qwik"` field, `index.qwik.mjs`).
+
+### Alpine (`@watchstop/alpine`)
+
+```ts
+type CreateStopwatchOptions = OwnedStopwatchOptions | BorrowedStopwatchOptions
+
+type StopwatchBinding = {
+  elapsed: number
+  running: boolean
+  start: () => void
+  stop: () => void
+  reset: () => void
+  stopwatch: Stopwatch
+  init: (this: StopwatchBinding) => void
+  destroy: () => void
+}
+
+declare function createStopwatch(options?: CreateStopwatchOptions): StopwatchBinding
+```
+
+- Alpine has no hook/inject context, so the entry point is a factory (same rationale as Svelte).
+- No plugin / `Alpine.data` registration helper — one entry point only; callers may wrap `createStopwatch()` in their own `Alpine.data` if they want a name.
+- `init` performs imperative `subscribe` (writes `elapsed` and `running` through `this` for Alpine reactivity).
+- `destroy` unsubscribes and, when owning, destroys the core instance; Alpine invokes it on element removal.
+- Implication for core: destroy/unsubscribe paths must be idempotent (already required).
+
+## If Store is insufficient for an adapter
+
+Change **core** + these docs + core tests first. Do not special-case timing or subscription semantics inside a single adapter.
+
+## Framework docs
+
+Framework pages under `/docs/frameworks/*` document the matching package once it ships, except normative binding rules already stated (e.g. React `useSyncExternalStore` snapshot caching). Follow the constraints above when implementing or updating adapters.
