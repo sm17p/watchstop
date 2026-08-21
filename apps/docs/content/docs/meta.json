@@ -3,6 +3,7 @@
   "pages": [
     "index",
     "architecture",
+    "spec",
     "agents",
     "core",
     "runtimes",

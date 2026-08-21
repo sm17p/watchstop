@@ -69,7 +69,7 @@ During a single notify wave:
 
 The React adapter must cache the value received via `subscribe` (or a versioned snapshot updated only inside the listener) and have `getSnapshot` return that cached snapshot so it is stable between notifications. Initial / server snapshot may still come from one `get()` call when subscribing begins.
 
-See [Agents](/docs/agents) and [React](/docs/frameworks/react).
+See [Spec](/docs/spec) and [React](/docs/frameworks/react).
 
 ## Adopter expectations
 
@@ -79,4 +79,4 @@ Adapters must:
 2. Subscribe for updates; unsubscribe on teardown (`DestroyRef`, `onCleanup`, `onDestroy`, element `destroy`, etc.).
 3. Never call `start`/`stop`/`reset` unless the adapter’s public API intentionally exposes those methods (hooks may return the `Stopwatch` instance or wrap controls).
 
-See [Agents](/docs/agents) for framework-specific binding constraints (especially Angular, Qwik, Alpine).
+See [Spec](/docs/spec) for framework-specific binding constraints (especially Angular, Qwik, Alpine).

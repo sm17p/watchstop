@@ -44,7 +44,7 @@ pnpm install
 mise run docs:dev
 ```
 
-See [AGENTS.md](./AGENTS.md) for agent implementation rules. Core docs under `/docs` are the source of truth.
+See [AGENTS.md](./AGENTS.md) for how coding agents should use the APIs. See [CONTRIBUTING.md](./CONTRIBUTING.md) when changing this repo. Core docs under `/docs` are the source of truth.
 
 ## Examples
 

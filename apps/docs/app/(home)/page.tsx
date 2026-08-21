@@ -1,5 +1,22 @@
+import { Blocks, Sigma } from 'lucide-react'
 import Link from 'next/link'
 import { WatchGallery } from '@/components/watch-gallery'
+
+type FrameworkLink = {
+  href: string
+  name: string
+}
+
+const frameworks: FrameworkLink[] = [
+  { href: '/docs/frameworks/react', name: 'React' },
+  { href: '/docs/frameworks/svelte', name: 'Svelte' },
+  { href: '/docs/frameworks/vue', name: 'Vue' },
+  { href: '/docs/frameworks/solid', name: 'Solid' },
+  { href: '/docs/frameworks/angular', name: 'Angular' },
+  { href: '/docs/frameworks/qwik', name: 'Qwik' },
+  { href: '/docs/frameworks/alpine', name: 'Alpine' },
+  { href: '/docs/frameworks/vanilla', name: 'Vanilla' },
+]
 
 export default function HomePage() {
   return (
@@ -19,7 +36,29 @@ export default function HomePage() {
           Runtime-agnostic stopwatch core with thin framework adapters. One
           session drives every face — docs are the design spec.
         </p>
-        <p className="flex gap-3">
+        <p className="text-fd-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <span className="inline-flex items-center gap-1.5 font-medium text-fd-foreground">
+            <Blocks aria-hidden className="size-4" />
+            Adapters
+          </span>
+          {frameworks.map((framework) => (
+            <Link
+              key={framework.href}
+              href={framework.href}
+              className="underline-offset-4 hover:underline"
+            >
+              {framework.name}
+            </Link>
+          ))}
+        </p>
+        <p className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/docs#elapsed-math"
+            className="inline-flex items-center gap-1.5 rounded-full border border-fd-border bg-fd-card/60 px-3 py-1 text-sm font-medium shadow-sm -rotate-1 hover:rotate-0 hover:bg-fd-accent motion-reduce:rotate-0 motion-reduce:transition-none transition-transform"
+          >
+            <Sigma aria-hidden className="size-3.5" />
+            Check the math
+          </Link>
           <Link href="/docs" className="font-medium underline">
             Open the docs
           </Link>

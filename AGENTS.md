@@ -1,48 +1,60 @@
 # Agents
 
-Core documentation under `apps/docs/content/docs` is the **source of truth**.
+Guidance for coding agents **using** Watchstop in an app. Public names, packaging, and adapter constraints for changing this repo are in `/docs/spec`. Behavior and test cases come from Core, Runtimes, and Frameworks — not from a Spec checklist.
 
-## Rules
+Contributing to this repo: [CONTRIBUTING.md](./CONTRIBUTING.md) and [Spec](https://watchstop.sm17p.me/docs/spec).
 
-1. Implement from docs — especially Core, Runtimes, and Agents pages — not from assumed APIs.
-2. Public TypeScript names must match the docs exactly (`Clock`, `Store`, `Stopwatch`, clock factories).
-3. Tests are required for every package; derive cases from acceptance criteria in `/docs/agents`.
-4. Prefer machine indexes over scraping HTML:
-   - `/llms.txt` — index of pages (when docs are running)
-   - `/llms-full.txt` — concatenated processed markdown
+## Packages
 
-## Package map
+Use `@watchstop/core` in vanilla, Node, Bun, Deno, and tests. Use a framework adapter only inside that framework.
 
-| Package | Role |
+| Package | Entry point |
 | --- | --- |
-| `@watchstop/core` | Clock + Store + Stopwatch + runtime clocks (ships first) |
-| `@watchstop/react` | adapter |
-| `@watchstop/svelte` | adapter |
-| `@watchstop/vue` | adapter |
-| `@watchstop/solid` | adapter |
-| `@watchstop/angular` | adapter |
-| `@watchstop/qwik` | adapter |
-| `@watchstop/alpine` | adapter |
+| `@watchstop/core` | `Stopwatch`, clock factories |
+| `@watchstop/react` | `useStopwatch` |
+| `@watchstop/vue` | `useStopwatch` |
+| `@watchstop/solid` | `useStopwatch` |
+| `@watchstop/qwik` | `useStopwatch` |
+| `@watchstop/angular` | `injectStopwatch` |
+| `@watchstop/svelte` | `createStopwatch` |
+| `@watchstop/alpine` | `createStopwatch` |
 
-No timing logic in adapters — only `get` / `subscribe` bridges.
+Adapters are thin `get` / `subscribe` / `destroy` bridges. Do not put clocks or elapsed math in adapter-using code when core already owns that.
 
-## Workflow
+## Exact names
 
-1. Read `/docs/architecture`, `/docs/core/*`, `/docs/runtimes/*`, `/docs/agents`
-2. Implement `@watchstop/core` + Vitest until green
-3. Then adapters
-4. Fill framework docs only after code ships
+Use `Clock`, `Store`, `Stopwatch`, `createBrowserClock`, `createTimerClock`, `createMockClock`, and `detectClock`. Do not invent `elapsed` as a core method, `onTick`, or `addEventListener`.
 
-## Changesets
+## Core usage
 
-For user-facing package changes, add a changeset with `pnpm changeset` (or `mise run changeset`). Prefer independent versioning; ignore `@watchstop/docs` (never published).
+```ts
+import { Stopwatch, createMockClock, detectClock } from '@watchstop/core'
 
-Do **not** run `changeset publish`, `mise run release`, `changeset pre enter`, or `mise run pre:enter` / `pre:exit` unless the user explicitly asks. Version bumps and npm publish are owned by the **Version Packages** PR and `.github/workflows/release.yml` on `main` (OIDC Trusted Publishing; no `NPM_TOKEN`). Prefer squash-merge for Version Packages PRs. Agents must not publish from routine feature PRs. See README for Trusted Publisher setup (`npm trust` CLI primary; website alternate).
+const live = new Stopwatch()
+const explicit = new Stopwatch(detectClock())
+const clock = createMockClock()
+const underTest = new Stopwatch(clock)
 
-## Workflows
+live.start()
+live.get()
+live.stop()
+live.reset()
+const unsubscribe = live.subscribe((elapsed) => {
+  void elapsed
+})
+unsubscribe()
+live.destroy()
+```
 
-Run `mise run zizmor` (or the CI `zizmor` job) before merging workflow changes. Pin third-party Actions to full commit SHAs with a version comment. Do not add pnpm store cache on release `pack` / `publish`.
+- Construction is stopped at `0`. Call `start()` to run.
+- `get()` is live elapsed. `subscribe` notifies on ticks and mutating controls.
+- Tests: inject `createMockClock()` and `advance(ms)`.
+- Share one `Clock` object across stopwatches when you want a shared schedule. Bare `new Stopwatch()` / `detectClock()` each allocate a fresh clock.
 
-OSV-Scanner gates dependency vulns: PR/`merge_group` delta scan and weekly full scan share [`.github/workflows/osv-scanner.yml`](.github/workflows/osv-scanner.yml) so Code Scanning keeps one config id. Release **publish** runs a full scan (`osv-scan` in `release.yml` before `pack`/`publish`, `upload-sarif: false`) and does not block the Version Packages job.
+## Adapter usage
 
-When writing PR bodies that will be squash-merged to `main`, never include GitHub [workflow-skip markers](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs) (even inside backticks or “we do not use …” prose). Those substrings skip every `push` workflow for that commit. Release also supports `workflow_dispatch` if a push was skipped.
+Hooks and factories return `elapsed`, `running`, `start`, `stop`, `reset`, and `stopwatch`. They do not auto-start.
+
+Omit options to **own** an instance (`clock` and `precisionMs` are forwarded to `Stopwatch`). Pass `{ stopwatch }` to **borrow** an existing instance; the adapter must not `destroy` it.
+
+Prefer `/llms.txt` and `/llms-full.txt` when the docs app is running instead of scraping HTML.

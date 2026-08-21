@@ -1,6 +1,77 @@
 ---
 title: Vanilla
-description: Use core directly in the browser.
+description: Use `@watchstop/core` directly in the browser or Node.
 ---
 
-Docs after core ships. Docs-only — no dedicated package.
+There is no `@watchstop/vanilla` package. Call `Stopwatch` from `@watchstop/core`. Adapters exist only where a framework needs a `get` / `subscribe` bridge into its reactivity.
+
+## Install
+
+```bash
+pnpm add @watchstop/core
+```
+
+```ts
+import { Stopwatch } from '@watchstop/core'
+```
+
+## Usage
+
+Construct a stopwatch, paint from `get()`, then `subscribe` for ticks and controls. Construction is stopped at `0`; nothing is scheduled until `start()`. `subscribe` does **not** invoke the listener synchronously — read `get()` yourself for the first paint.
+
+```ts
+import { Stopwatch } from '@watchstop/core'
+
+const stopwatch = new Stopwatch()
+const elapsedNode = document.querySelector('#elapsed')
+const toggle = document.querySelector('#toggle')
+
+if (!elapsedNode || !toggle) {
+  throw new Error('Missing #elapsed or #toggle')
+}
+
+const paint = (elapsed: number) => {
+  elapsedNode.textContent = `${Math.floor(elapsed)} ms`
+  toggle.textContent = stopwatch.running ? 'Stop' : 'Start'
+}
+
+paint(stopwatch.get())
+const unsubscribe = stopwatch.subscribe(paint)
+
+toggle.addEventListener('click', () => {
+  if (stopwatch.running) {
+    stopwatch.stop()
+  } else {
+    stopwatch.start()
+  }
+})
+
+window.addEventListener('pagehide', () => {
+  unsubscribe()
+  stopwatch.destroy()
+})
+```
+
+- `get()` is live elapsed, including between ticks.
+- `running` is true only during an active segment.
+- `reset()` sets elapsed to `0` and stops.
+- `destroy()` stops ticks, clears listeners, and ignores later `start` / `stop` / `reset`. Call it when the page or owner goes away.
+- Pass `{ precisionMs }` to coarsen notify cadence — see [Options](/docs/core/options). `get()` stays live.
+
+Default construction uses `detectClock()` (browser `requestAnimationFrame` when present, otherwise the timer clock). Pass `createBrowserClock()`, `createTimerClock()`, or `createMockClock()` when you want an explicit runtime. See [Clock](/docs/core/clock) and [Testing](/docs/runtimes/testing).
+
+## Sharing
+
+Stopwatches that share one `Clock` object share one underlying `schedule` loop. Pass the same clock when you want coalescing:
+
+```ts
+import { Stopwatch, createBrowserClock } from '@watchstop/core'
+
+const clock = createBrowserClock()
+const lapA = new Stopwatch(clock)
+const lapB = new Stopwatch(clock)
+```
+
+Bare `new Stopwatch()` still allocates a fresh clock each call. To share elapsed across UI, share the **Stopwatch** instance and subscribe from each owner; only the owner that constructed it should `destroy()`.
+
+See [Store](/docs/core/store), [Stopwatch](/docs/core/stopwatch), and [Architecture](/docs/architecture).
