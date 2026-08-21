@@ -56,6 +56,10 @@ Factories exist where the framework has no hook or inject context to hang owners
 4. `get()` returns the live elapsed value (running or stopped). `running` is the public flag for whether a segment is active.
 5. `destroy()` unregisters, clears listeners, sets `running = false`, and makes further use a no-op or safe idle state (see [Stopwatch](/docs/core/stopwatch)).
 
+Rules 3 and 4 as a picture — one shared schedule per `Clock` object, while each stopwatch still owns its own banked time:
+
+<ElapsedSystemCircle />
+
 ## Runtime matrix
 
 | Environment | Factory | `now` | `schedule` / `cancel` |
