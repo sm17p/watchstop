@@ -2,6 +2,17 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+:root {
+  --color-fd-muted-foreground: #666666;
+  --color-running-ember: #ea580c;
+  --color-terminal-well: #07140f;
+  --color-terminal-phosphor: #34d399;
+  --color-terminal-dim: #047857;
+  --color-flap-board: #1c1917;
+  --color-flap-amber: #fffbeb;
+  --color-flap-label: #b45309;
+}
+
 html {
   scrollbar-gutter: stable;
 }

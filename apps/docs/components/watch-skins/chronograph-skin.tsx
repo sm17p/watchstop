@@ -65,11 +65,16 @@ export function ChronographSkin({ elapsed, running }: SkinProps) {
           y1="60"
           x2={handX}
           y2={handY}
-          stroke={running ? '#ea580c' : 'currentColor'}
+          stroke={running ? 'var(--color-running-ember, #ea580c)' : 'currentColor'}
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <circle cx="60" cy="60" r="3" fill={running ? '#ea580c' : 'currentColor'} />
+        <circle
+          cx="60"
+          cy="60"
+          r="3"
+          fill={running ? 'var(--color-running-ember, #ea580c)' : 'currentColor'}
+        />
       </svg>
       <p className="font-mono text-xs text-fd-muted-foreground tabular-nums">
         {Math.floor(totalMs)} ms
