@@ -10,6 +10,10 @@ export function Provider({ children }: { children: ReactNode }) {
       search={{
         SearchDialog,
       }}
+      theme={{
+        scriptProps:
+          typeof window === 'undefined' ? undefined : { type: 'application/json' },
+      }}
     >
       {children}
     </RootProvider>

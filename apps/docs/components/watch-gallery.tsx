@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useStopwatch } from '@watchstop/react'
 import { sessionStopwatch } from '@/components/session-stopwatch-store'
 import { ChronographSkin } from '@/components/watch-skins/chronograph-skin'
@@ -8,13 +7,9 @@ import { SplitFlapSkin } from '@/components/watch-skins/split-flap-skin'
 import { TerminalSkin } from '@/components/watch-skins/terminal-skin'
 
 export function WatchGallery() {
-  const { elapsed, running, start } = useStopwatch({
+  const { elapsed, running } = useStopwatch({
     stopwatch: sessionStopwatch,
   })
-
-  useEffect(() => {
-    start()
-  }, [start])
 
   return (
     <section

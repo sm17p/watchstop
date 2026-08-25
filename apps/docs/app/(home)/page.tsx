@@ -27,6 +27,7 @@ export default function HomePage() {
           alt=""
           width={40}
           height={40}
+          aria-hidden
         />
         <h1 className="text-3xl font-bold tracking-tight">Watchstop</h1>
       </div>
@@ -54,7 +55,7 @@ export default function HomePage() {
         <p className="flex flex-wrap items-center gap-3">
           <Link
             href="/docs#elapsed-math"
-            className="inline-flex items-center gap-1.5 rounded-full border border-fd-border bg-fd-card/60 px-3 py-1 text-sm font-medium shadow-sm -rotate-1 hover:rotate-0 hover:bg-fd-accent motion-reduce:rotate-0 motion-reduce:transition-none transition-transform"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-fd-border bg-fd-card/60 px-3 py-1 text-sm font-medium shadow-sm -rotate-1 hover:rotate-0 hover:bg-fd-accent motion-reduce:rotate-0 motion-reduce:transition-none transition-transform"
           >
             <Sigma aria-hidden className="size-3.5" />
             Check the math
