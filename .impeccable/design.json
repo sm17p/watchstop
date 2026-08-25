@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-25T08:05:03Z",
+  "title": "Design System: Watchstop Docs",
+  "extensions": {
+    "colorMeta": {
+      "ink-primary": {
+        "role": "primary",
+        "displayName": "Ink Primary",
+        "canonical": "#171717",
+        "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#131313", "#2e2e2e", "#6a6a6a", "#ababab", "#e3e3e3"]
+      },
+      "ink-primary-foreground": {
+        "role": "primary",
+        "displayName": "Ink Primary Foreground",
+        "canonical": "#fafafa",
+        "tonalRamp": ["#3b3b3b", "#6e6e6e", "#a0a0a0", "#d3d3d3", "#fbfbfb", "#fcfcfc", "#fdfdfd", "#fefefe"]
+      },
+      "soft-paper": {
+        "role": "neutral",
+        "displayName": "Soft Paper",
+        "canonical": "#f5f5f5",
+        "tonalRamp": ["#3a3a3a", "#6b6b6b", "#9c9c9c", "#cdcdcd", "#f6f6f6", "#f8f8f8", "#fbfbfb", "#fdfdfd"]
+      },
+      "soft-ink": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "#0a0a0a",
+        "tonalRamp": ["#020202", "#040404", "#060606", "#080808", "#232323", "#616161", "#a6a6a6", "#e1e1e1"]
+      },
+      "graphite-muted": {
+        "role": "neutral",
+        "displayName": "Graphite Muted",
+        "canonical": "#737373",
+        "tonalRamp": ["#1b1b1b", "#323232", "#494949", "#606060", "#888888", "#a8a8a8", "#cccccc", "#ebebeb"]
+      },
+      "card-wash": {
+        "role": "neutral",
+        "displayName": "Card Wash",
+        "canonical": "#f1f1f1",
+        "tonalRamp": ["#393939", "#696969", "#999999", "#c9c9c9", "#f3f3f3", "#f6f6f6", "#fafafa", "#fcfcfc"]
+      },
+      "hairline-border": {
+        "role": "neutral",
+        "displayName": "Hairline Border",
+        "canonical": "#cccccc80",
+        "tonalRamp": ["#303030", "#595959", "#828282", "#ababab", "#d6d6d6", "#e2e2e2", "#eeeeee", "#f7f7f7"]
+      },
+      "accent-wash": {
+        "role": "neutral",
+        "displayName": "Accent Wash",
+        "canonical": "#d1d1d180",
+        "tonalRamp": ["#313131", "#5b5b5b", "#858585", "#afafaf", "#dadada", "#e5e5e5", "#f0f0f0", "#f8f8f8"]
+      },
+      "focus-ring": {
+        "role": "neutral",
+        "displayName": "Focus Ring",
+        "canonical": "#a3a3a3",
+        "tonalRamp": ["#272727", "#474747", "#686868", "#888888", "#b0b0b0", "#c5c5c5", "#dddddd", "#f0f0f0"]
+      },
+      "dark-paper": {
+        "role": "neutral",
+        "displayName": "Dark Paper",
+        "canonical": "#121212",
+        "tonalRamp": ["#040404", "#080808", "#0b0b0b", "#0f0f0f", "#2a2a2a", "#676767", "#a9a9a9", "#e2e2e2"]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "Dark Ink",
+        "canonical": "#ebebeb",
+        "tonalRamp": ["#383838", "#676767", "#969696", "#c4c4c4", "#eeeeee", "#f2f2f2", "#f7f7f7", "#fbfbfb"]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "Dark Card",
+        "canonical": "#191919",
+        "tonalRamp": ["#060606", "#0b0b0b", "#101010", "#151515", "#303030", "#6c6c6c", "#acacac", "#e3e3e3"]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Dark Muted",
+        "canonical": "#212121",
+        "tonalRamp": ["#080808", "#0e0e0e", "#151515", "#1b1b1b", "#373737", "#707070", "#afafaf", "#e5e5e5"]
+      },
+      "dark-primary": {
+        "role": "primary",
+        "displayName": "Dark Primary",
+        "canonical": "#fafafa",
+        "tonalRamp": ["#3b3b3b", "#6e6e6e", "#a0a0a0", "#d3d3d3", "#fbfbfb", "#fcfcfc", "#fdfdfd", "#fefefe"]
+      },
+      "running-ember": {
+        "role": "secondary",
+        "displayName": "Running Ember",
+        "canonical": "#ea580c",
+        "tonalRamp": ["#381502", "#662605", "#953807", "#c4490a", "#ec6824", "#f19463", "#f7c2a7", "#fceae1"]
+      },
+      "terminal-well": {
+        "role": "neutral",
+        "displayName": "Terminal Well",
+        "canonical": "#07140f",
+        "tonalRamp": ["#010403", "#030907", "#040c0a", "#06100c", "#213a2f", "#617a72", "#a8b7b1", "#e1e8e5"]
+      },
+      "terminal-phosphor": {
+        "role": "secondary",
+        "displayName": "Terminal Phosphor",
+        "canonical": "#34d399",
+        "tonalRamp": ["#0c3224", "#165c43", "#218761", "#2bb180", "#48d7a3", "#7de2bd", "#b5efda", "#e6f9f2"]
+      },
+      "terminal-dim": {
+        "role": "secondary",
+        "displayName": "Terminal Dim",
+        "canonical": "#047857",
+        "tonalRamp": ["#011c14", "#023527", "#034e39", "#04674b", "#1f8c6f", "#5bae99", "#9cd1c4", "#daf0eb"]
+      },
+      "flap-board": {
+        "role": "neutral",
+        "displayName": "Flap Board",
+        "canonical": "#1c1917",
+        "tonalRamp": ["#060605", "#0c0b0a", "#12100e", "#171513", "#322f2d", "#6e6b6a", "#aeacab", "#e4e3e3"]
+      },
+      "flap-amber": {
+        "role": "secondary",
+        "displayName": "Flap Amber",
+        "canonical": "#fffbeb",
+        "tonalRamp": ["#3d3c38", "#706e66", "#a3a095", "#d6d2c3", "#fffcf0", "#fffcf3", "#fffdf8", "#fffefc"]
+      },
+      "flap-label": {
+        "role": "secondary",
+        "displayName": "Flap Label",
+        "canonical": "#b45309",
+        "tonalRamp": ["#2b1402", "#4f2404", "#733505", "#974507", "#be6c2b", "#d29866", "#e7c8a8", "#f6eadf"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Home brand title Watchstop." },
+      "headline": { "displayName": "Headline", "purpose": "Docs section titles via Fumadocs." },
+      "title": { "displayName": "Title", "purpose": "Inline emphasis and pill CTA weight." },
+      "body": { "displayName": "Body", "purpose": "Explanatory prose, often capped near 65ch." },
+      "label": { "displayName": "Label", "purpose": "Uppercase skin and figure captions." },
+      "mono-readout": { "displayName": "Mono readout", "purpose": "Session clock and skin elapsed values." }
+    },
+    "shadows": [
+      {
+        "name": "pill-lift",
+        "value": "0 1px 2px rgb(0 0 0 / 0.05)",
+        "purpose": "Quiet lift on the home Check the math pill only."
+      },
+      {
+        "name": "terminal-well",
+        "value": "inset 0 0 40px rgba(16,185,129,0.12)",
+        "purpose": "Phosphor glow inside the terminal skin field."
+      },
+      {
+        "name": "flap-inner",
+        "value": "inset 0 2px 4px rgb(0 0 0 / 0.25)",
+        "purpose": "Inner depth on split-flap digit tiles."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fade-digit",
+        "value": "fadeDigit 0.18s ease-out",
+        "purpose": "Split-flap digit change; keyframes translateY 0.35em and opacity 0.35→1."
+      },
+      {
+        "name": "pill-tilt",
+        "value": "transform 150ms ease",
+        "purpose": "Home pill settles from -rotate-1 to 0 on hover; disabled under motion-reduce."
+      },
+      {
+        "name": "caret-pulse",
+        "value": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "purpose": "Terminal caret while the session is running."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Ghost Control",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Session Start/Stop/Reset and math demo controls — 44×44, quiet hover wash.",
+      "html": "<button type=\"button\" class=\"ds-btn-ghost\">Stop</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; border: none; border-radius: 0.375rem; padding: 8px; background: transparent; color: #0a0a0a; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-ghost:hover { background: #d1d1d180; } .ds-btn-ghost:focus-visible { outline: 2px solid #a3a3a3; outline-offset: 2px; } .ds-btn-ghost:disabled { opacity: 0.4; pointer-events: none; }"
+    },
+    {
+      "name": "Pill CTA",
+      "kind": "button",
+      "refersTo": "button-pill-cta",
+      "description": "Home Check the math chip with quiet shadow and slight tilt.",
+      "html": "<a class=\"ds-btn-pill\" href=\"#\"><svg class=\"ds-btn-pill-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M5 3h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zM5 7h14v2H5zm0 4h2v2H5zm4 0h10v2H9zm-4 4h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2z\"/></svg>Check the math</a>",
+      "css": ".ds-btn-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; border: 1px solid #cccccc80; background: #f1f1f199; color: #0a0a0a; padding: 4px 12px; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; text-decoration: none; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transform: rotate(-1deg); transition: transform 150ms ease, background-color 150ms ease; } .ds-btn-pill:hover { transform: rotate(0deg); background: #d1d1d180; } .ds-btn-pill:focus-visible { outline: 2px solid #a3a3a3; outline-offset: 2px; } .ds-btn-pill-icon { width: 14px; height: 14px; flex: none; }"
+    },
+    {
+      "name": "Skin Panel",
+      "kind": "card",
+      "refersTo": "skin-panel",
+      "description": "Chronograph-style instrument panel on Fumadocs card wash.",
+      "html": "<article class=\"ds-skin-panel\"><p class=\"ds-skin-caption\">chronograph // skin</p><div class=\"ds-skin-face\">01:23.45</div><p class=\"ds-skin-footer\">8345 ms</p></article>",
+      "css": ".ds-skin-panel { display: flex; flex-direction: column; justify-content: space-between; border-radius: 0.75rem; border: 1px solid #cccccc80; background: #f1f1f166; padding: 16px; color: #0a0a0a; } .ds-skin-caption { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #737373; } .ds-skin-face { margin-top: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.5rem; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; } .ds-skin-footer { margin: 12px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.75rem; color: #737373; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Session Readout",
+      "kind": "custom",
+      "refersTo": "session-readout",
+      "description": "Header mono clock with muted centiseconds.",
+      "html": "<div class=\"ds-session\"><span class=\"ds-session-time\">01:23<span class=\"ds-session-cs\">.45</span></span><button type=\"button\" class=\"ds-btn-ghost\">Stop</button><button type=\"button\" class=\"ds-btn-ghost\">Reset</button></div>",
+      "css": ".ds-session { display: flex; align-items: center; gap: 8px; color: #0a0a0a; font-size: 0.875rem; } .ds-session-time { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1rem; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; } .ds-session-cs { color: #737373; } .ds-btn-ghost { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; border: none; border-radius: 0.375rem; padding: 8px; background: transparent; color: #0a0a0a; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; cursor: pointer; } .ds-btn-ghost:hover { background: #d1d1d180; } .ds-btn-ghost:focus-visible { outline: 2px solid #a3a3a3; outline-offset: 2px; }"
+    },
+    {
+      "name": "Terminal Skin",
+      "kind": "custom",
+      "refersTo": "skin-panel",
+      "description": "Dark terminal well with phosphor mono elapsed and live caret.",
+      "html": "<article class=\"ds-terminal\"><p class=\"ds-terminal-caption\">terminal // skin</p><p class=\"ds-terminal-face\"><span class=\"ds-terminal-prompt\">$</span> elapsed <span>01:23.45</span><span class=\"ds-terminal-caret\"></span></p><p class=\"ds-terminal-footer\">raw 8345 ms</p></article>",
+      "css": ".ds-terminal { display: flex; flex-direction: column; justify-content: space-between; border-radius: 0.75rem; border: 1px solid #064e3b99; background: #07140f; padding: 16px; color: #34d399; box-shadow: inset 0 0 40px rgba(16,185,129,0.12); text-align: left; } .ds-terminal-caption { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.625rem; letter-spacing: 0.2em; text-transform: uppercase; color: #059669e6; } .ds-terminal-face { margin: 16px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.5rem; letter-spacing: -0.025em; } .ds-terminal-prompt { color: #047857; } .ds-terminal-caret { display: inline-block; margin-left: 2px; width: 0.55ch; height: 1.1em; background: #34d399; vertical-align: -0.1em; animation: ds-caret-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; } .ds-terminal-footer { margin: 12px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.75rem; color: #047857; font-variant-numeric: tabular-nums; } @keyframes ds-caret-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }"
+    },
+    {
+      "name": "Docs Nav Brand",
+      "kind": "nav",
+      "refersTo": "session-readout",
+      "description": "Compact logo + Watchstop wordmark for Fumadocs nav title.",
+      "html": "<span class=\"ds-nav-brand\"><svg class=\"ds-nav-logo\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"currentColor\"/><line x1=\"12\" y1=\"12\" x2=\"12\" y2=\"6\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>Watchstop</span>",
+      "css": ".ds-nav-brand { display: inline-flex; align-items: center; gap: 8px; color: #0a0a0a; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; } .ds-nav-logo { width: 24px; height: 24px; flex: none; } .ds-nav-brand:focus-visible { outline: 2px solid #a3a3a3; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Chronograph Bench",
+    "overview": "Watchstop’s docs feel like a quiet workbench: Fumadocs supplies the neutral tool-chest chrome, and the live stopwatch faces are the instruments on the bench. Inter carries reading and navigation; monospace carries elapsed time, skin labels, and Spec-adjacent figures. Density stays tight inside instrument groups, with generous breaks between sections on a 4pt scale.\n\nPersonality is technical, sharp, and slightly playful — a workshop instrument, not a SaaS marketing page and not a personal art site. Keep Fumadocs light and dark. Do not restyle the whole docs theme. Do not borrow sm17p.me’s dark art-led atmosphere. Confirmed visual rejections: generic SaaS heroes, equal feature-card grids, purple/blue glow, nested cards, and a fully centered stack with even padding everywhere.",
+    "keyCharacteristics": [
+      "Live faces lead; copy and chrome stay secondary",
+      "Fumadocs neutral tokens own page chrome; instrument accents may signal live state outside skins",
+      "One shared session stopwatch drives header readout and gallery faces",
+      "Skin panels use rounded-xl and hairline borders; controls use rounded-md with 44×44 hit targets",
+      "Sibling rhythm uses gap on a 4 / 8 / 12 / 16 / 24 / 32 / 48 scale"
+    ],
+    "rules": [
+      {
+        "name": "The Bench Chrome Rule",
+        "body": "Page chrome stays on Fumadocs neutrals. Instrument accents (Running Ember, Terminal Phosphor, Flap Amber) may appear outside skins when a control needs a live-state signal — never as a purple/blue glow theme.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Session Rule",
+        "body": "One shared stopwatch drives header readout and gallery faces; do not invent parallel decorative timers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Instrument Type Rule",
+        "body": "Elapsed time, raw ms, and skin captions stay monospace + tabular nums. Marketing display fonts are out of bounds.",
+        "section": "typography"
+      },
+      {
+        "name": "The Faces-First Rule",
+        "body": "On the home surface, the gallery precedes explanatory copy and adapter links.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. Glow and inner shadow appear only as skin material or a single quiet CTA lift — never as page atmosphere.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep live faces primary and Fumadocs chrome quiet.",
+      "Do reuse Running Ember, Terminal Phosphor, or Flap Amber when a control needs a live-state signal.",
+      "Do drive header and gallery from one session stopwatch.",
+      "Do use the 4pt spacing ladder and gap between siblings.",
+      "Do keep control hit targets at least 44×44."
+    ],
+    "donts": [
+      "Don't restyle the whole Fumadocs theme or import sm17p.me’s art-led atmosphere.",
+      "Don't ship purple/blue glow, nested cards, or equal three-up feature-card grids as the composition.",
+      "Don't center every block or invent parallel decorative timers.",
+      "Don't invent APIs, testimonials, or benchmarks in UI chrome.",
+      "Don't place the session stopwatch where it fights GitHub or search."
+    ]
+  }
+}
