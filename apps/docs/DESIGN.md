@@ -6,7 +6,7 @@ colors:
   ink-primary-foreground: "#fafafa"
   soft-paper: "#f5f5f5"
   soft-ink: "#0a0a0a"
-  graphite-muted: "#737373"
+  graphite-muted: "#666666"
   card-wash: "#f1f1f1"
   hairline-border: "#cccccc80"
   accent-wash: "#d1d1d180"
@@ -139,7 +139,7 @@ Fumadocs neutral greys carry the bench; chronograph orange, terminal emerald, an
 ### Neutral
 - **Soft Paper** (`#f5f5f5`): Page background (`--color-fd-background`).
 - **Card Wash** (`#f1f1f1`): Skin and surface fills (`--color-fd-card`), often at reduced opacity.
-- **Graphite Muted** (`#737373`): Secondary copy (`--color-fd-muted-foreground`).
+- **Graphite Muted** (`#666666`): Secondary copy (`--color-fd-muted-foreground`); ≥4.5:1 on Soft Paper.
 - **Hairline Border** (`#cccccc80`): Panel edges (`--color-fd-border`).
 - **Accent Wash** (`#d1d1d180`): Hover wash on ghost controls (`--color-fd-accent`).
 - **Focus Ring** (`#a3a3a3`): Focus token (`--color-fd-ring`).
@@ -166,6 +166,7 @@ Fumadocs neutral greys carry the bench; chronograph orange, terminal emerald, an
 - **Title** (500, `1rem`): Inline emphasis, pill CTA label weight.
 - **Body** (400, `1rem`, comfortable leading, max ~`65ch` on home supporting copy): Explanatory prose.
 - **Label** (600, `0.625rem` / `10px`, `0.2em` tracking, uppercase): Skin captions (`chronograph // skin`) and figure captions.
+- **Figure micro** (400–600, `9px`–`12px`, monospace or sans inside SVG): Diagram node labels in `elapsed-math` / `elapsed-system-circle` only — not page chrome.
 - **Mono readout** (400–600, `1rem`–`1.875rem`, tabular-nums): Session header clock and skin elapsed values.
 
 ### Named Rules
@@ -199,14 +200,14 @@ Controls use gently curved `rounded-md` (`0.375rem`). Instrument panels use larg
 ### Buttons
 - **Shape:** Gently curved controls (`rounded-md` / `0.375rem`); home CTA is a pill.
 - **Ghost (session Start/Stop/Reset and math demo controls):** Transparent, `text-xs font-medium`, min 44×44, `hover:bg-fd-accent`, disabled at 40% opacity.
-- **Pill CTA (“Check the math”):** Border + `bg-fd-card/60`, `shadow-sm`, Sigma icon, slight tilt interaction.
+- **Pill CTA (“Check the math”):** Border + `bg-fd-card/60`, `shadow-sm`, Sigma icon, `min-h-11` (44px), slight tilt interaction.
 - **Hover / Focus:** Accent wash hover; Fumadocs ring token for focus. No glow rings.
 
 ### Cards / Containers
 - **Corner Style:** Instrument panels `rounded-xl` (`0.75rem`)
-- **Background:** Chronograph uses `bg-fd-card/40`; terminal `#07140f`; flap `bg-stone-900`
+- **Background:** Chronograph uses `bg-fd-card/40`; terminal `var(--color-terminal-well)`; flap `var(--color-flap-board)`
 - **Shadow Strategy:** See Elevation — inset material on skins only
-- **Border:** `border-fd-border` (chronograph) or skin-matched emerald/stone borders
+- **Border:** `border-fd-border` (chronograph) or skin-matched phosphor/flap borders via CSS vars
 - **Internal Padding:** `p-4` (`16px`) with caption / face / footer stack
 
 ### Inputs / Fields
@@ -214,13 +215,13 @@ Controls use gently curved `rounded-md` (`0.375rem`). Instrument panels use larg
 - **Focus:** Fumadocs ring token.
 
 ### Navigation
-- **Style:** Fumadocs home/docs layouts. Brand is logo (24px in nav, 40px on home) + “Watchstop”. Secondary nav slot holds the session stopwatch readout and controls — never overlapping GitHub or search.
-- **Mobile:** Fumadocs mobile sidebar; keep session controls usable at 44×44.
+- **Style:** Fumadocs home/docs layouts. Brand is logo (24px in nav, 40px on home) + “Watchstop”. Session stopwatch mounts in `nav.children` (`ms-auto`), not Fumadocs `secondary` links — `secondary` is `max-lg:hidden` and omitted from the mobile menu.
+- **Mobile:** Session controls stay in the top nav at 44×44; do not move them into `secondary`.
 
 ### Signature: Watch skins
 - **Chronograph:** SVG dial on Soft Paper card wash; Running Ember hand/hub while running; uppercase mono caption; raw ms footer.
-- **Terminal:** Dark well, phosphor mono `$ elapsed`, pulsing caret while running.
-- **Split-flap:** Stone board, amber captions, animated digit tiles with seam; “board readout” footer.
+- **Terminal:** Dark well, phosphor mono `$ elapsed`, pulsing caret while running (`motion-reduce:animate-none`).
+- **Split-flap:** Stone board, amber captions, animated digit tiles with seam (`motion-reduce:animate-none`); “board readout” footer.
 - **Gallery:** One shared session; chronograph full-bleed row, then terminal | split-flap.
 
 ### Signature: Session stopwatch

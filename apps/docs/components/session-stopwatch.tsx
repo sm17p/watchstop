@@ -17,7 +17,7 @@ export function SessionStopwatch() {
   const parts = formatClockParts(elapsed)
 
   const toggleRun = () => {
-    if (running) {
+    if (sessionStopwatch.running) {
       stop()
       return
     }
@@ -25,7 +25,11 @@ export function SessionStopwatch() {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-fd-foreground">
+    <div
+      role="group"
+      aria-label="Session stopwatch"
+      className="flex items-center gap-2 text-sm text-fd-foreground"
+    >
       <span className="font-mono text-base tabular-nums tracking-tight">
         {parts.minutes}:{parts.seconds}
         <span className="text-fd-muted-foreground">.{parts.centiseconds}</span>
