@@ -28,7 +28,7 @@ export function SessionStopwatch() {
     <div
       role="group"
       aria-label="Session stopwatch"
-      className="flex items-center gap-2 text-sm text-fd-foreground"
+      className="flex items-center gap-3 text-sm text-fd-foreground"
     >
       <span className="font-mono text-base tabular-nums tracking-tight">
         {parts.minutes}:{parts.seconds}
