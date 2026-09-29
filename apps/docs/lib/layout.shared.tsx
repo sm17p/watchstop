@@ -13,7 +13,7 @@ export function baseOptions(): BaseLayoutProps {
       ),
       url: '/',
       children: (
-        <div className="ms-auto flex items-center pe-2">
+        <div className="ms-6 flex items-center pe-2">
           <SessionStopwatch />
         </div>
       ),
