@@ -59,6 +59,8 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     if (current === undefined) {
       return
     }
+    elapsed.value = current.get()
+    running.value = current.running
     const unsubscribe = current.subscribe((value) => {
       elapsed.value = value
       running.value = current.running

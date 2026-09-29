@@ -1,10 +1,14 @@
 import type { Store } from '@watchstop/core'
 import { DestroyRef, inject, signal, type Signal } from '@angular/core'
 
-export function useStore<T>(store: Store<T>): Signal<T> {
+export function useStore<T>(
+  store: Store<T>,
+  onNotified?: (value: T) => void,
+): Signal<T> {
   const latestValue = signal(store.get())
   const unsubscribe = store.subscribe((value) => {
     latestValue.set(value)
+    onNotified?.(value)
   })
   inject(DestroyRef).onDestroy(unsubscribe)
   return latestValue.asReadonly()

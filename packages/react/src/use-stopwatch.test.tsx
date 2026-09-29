@@ -273,6 +273,45 @@ describe('useStopwatch', () => {
     expect(shared.get()).toBe(32)
   })
 
+  it('keeps one core listener and updates elapsed while running stays true', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const { result, unmount } = renderHook(() =>
+      useStopwatch({ stopwatch: shared }),
+    )
+
+    expect(bridgedListeners).toBe(1)
+    act(() => {
+      result.current.start()
+    })
+    expect(result.current.running).toBe(true)
+    expect(result.current.elapsed).toBe(0)
+
+    act(() => {
+      clock.advance(16)
+    })
+    expect(result.current.elapsed).toBe(16)
+    expect(result.current.running).toBe(true)
+    expect(bridgedListeners).toBe(1)
+
+    unmount()
+    expect(bridgedListeners).toBe(0)
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
+    expect(shared.running).toBe(true)
+  })
+
   it('does not exceed update depth while a live borrowed stopwatch is mounted', () => {
     let nowMs = 0
     const pending = new Map<symbol, () => void>()

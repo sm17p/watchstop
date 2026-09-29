@@ -94,7 +94,7 @@ While **stopped**, visible elapsed is `accumulated`.
 - If `destroyed`, no-op.
 - Unregister from the shared driver if registered.
 - Set `accumulated = 0`, clear `startTime`, set `running = false`.
-- Notify listeners with `0` when the previous visible value was not already `0`.
+- Notify listeners with `0` when the previous visible elapsed was not `0`, or when `running` was true. Stay silent when already stopped at `0`.
 
 ### `get(): number`
 

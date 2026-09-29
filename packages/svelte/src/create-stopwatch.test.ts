@@ -149,6 +149,58 @@ describe('createStopwatch', () => {
     target.remove()
   })
 
+  it('shares one core subscription across elapsed and running', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const stopwatch = createStopwatch({ stopwatch: shared })
+    const elapsed: number[] = []
+    const runningStates: boolean[] = []
+    const unsubscribeElapsed = stopwatch.subscribe((value) => {
+      elapsed.push(value)
+    })
+    const unsubscribeRunning = stopwatch.running.subscribe((value) => {
+      runningStates.push(value)
+    })
+    const unsubscribeRunningAgain = stopwatch.running.subscribe(() => {})
+
+    expect(bridgedListeners).toBe(1)
+    expect(elapsed).toEqual([0])
+    expect(runningStates).toEqual([false])
+
+    stopwatch.start()
+    expect(elapsed).toEqual([0, 0])
+    expect(runningStates).toEqual([false, true])
+    clock.advance(16)
+    expect(elapsed).toEqual([0, 0, 16])
+    expect(runningStates.at(-1)).toBe(true)
+    expect(bridgedListeners).toBe(1)
+
+    unsubscribeRunningAgain()
+    expect(bridgedListeners).toBe(1)
+    clock.advance(16)
+    expect(elapsed).toEqual([0, 0, 16, 32])
+    expect(runningStates.at(-1)).toBe(true)
+
+    unsubscribeRunning()
+    expect(bridgedListeners).toBe(1)
+    unsubscribeElapsed()
+    expect(bridgedListeners).toBe(0)
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(48)
+    expect(shared.running).toBe(true)
+  })
+
   it('shares one stopwatch across two borrowed bindings', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const shared = new Stopwatch(clock)

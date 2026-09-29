@@ -77,12 +77,13 @@ export class Stopwatch implements Store<number> {
       return
     }
     const previous = this.get()
+    const wasRunning = this.#running
     this.#cancelTick()
     this.#accumulated = 0
     this.#startTime = undefined
     this.#running = false
     this.#lastNotifiedBucket = undefined
-    if (previous !== 0) {
+    if (previous !== 0 || wasRunning) {
       this.#notifyListeners(true)
     }
   }

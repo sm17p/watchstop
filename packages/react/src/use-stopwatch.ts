@@ -83,14 +83,13 @@ export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
     }
   }, [borrowedStopwatch, clock, precisionMs])
 
+  const elapsed = useStore(stopwatch, () => {
+    setRunning(stopwatch.running)
+  })
+
   useEffect(() => {
     setRunning(stopwatch.running)
-    return stopwatch.subscribe(() => {
-      setRunning(stopwatch.running)
-    })
   }, [stopwatch])
-
-  const elapsed = useStore(stopwatch)
 
   return { elapsed, running, start, stop, reset, stopwatch }
 }

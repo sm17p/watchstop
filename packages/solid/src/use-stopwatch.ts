@@ -41,13 +41,10 @@ function resolveStopwatch(options?: UseStopwatchOptions): {
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   const { stopwatch, ownsInstance } = resolveStopwatch(options)
-  const elapsed = useStore(stopwatch)
   const [running, setRunning] = createSignal(stopwatch.running)
-  onCleanup(
-    stopwatch.subscribe(() => {
-      setRunning(stopwatch.running)
-    }),
-  )
+  const elapsed = useStore(stopwatch, () => {
+    setRunning(stopwatch.running)
+  })
 
   if (ownsInstance) {
     onCleanup(() => {
