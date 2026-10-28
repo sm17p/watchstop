@@ -1,3 +1,5 @@
+import { formatClockParts } from './format-elapsed'
+
 type SkinProps = {
   elapsed: number
   running: boolean
@@ -15,10 +17,7 @@ function FlapDigit({ value }: { value: string }) {
 }
 
 export function SplitFlapSkin({ elapsed, running }: SkinProps) {
-  const totalMs = Math.max(0, Math.floor(elapsed))
-  const minutes = String(Math.floor(totalMs / 60_000)).padStart(2, '0')
-  const seconds = String(Math.floor((totalMs % 60_000) / 1000)).padStart(2, '0')
-  const centiseconds = String(Math.floor((totalMs % 1000) / 10)).padStart(2, '0')
+  const { minutes, seconds, centiseconds } = formatClockParts(elapsed)
 
   return (
     <div className="flex h-full flex-col justify-between rounded-xl border border-[color-mix(in_srgb,var(--color-flap-amber)_20%,#44403c)] bg-[var(--color-flap-board)] p-4">

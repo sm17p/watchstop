@@ -1,10 +1,14 @@
 import type { Store } from '@watchstop/core'
 import { onScopeDispose, shallowRef, type ShallowRef } from 'vue'
 
-export function useStore<T>(store: Store<T>): Readonly<ShallowRef<T>> {
+export function useStore<T>(
+  store: Store<T>,
+  onNotified?: (value: T) => void,
+): Readonly<ShallowRef<T>> {
   const latestValue = shallowRef(store.get())
   const unsubscribe = store.subscribe((value) => {
     latestValue.value = value
+    onNotified?.(value)
   })
   onScopeDispose(unsubscribe)
   return latestValue

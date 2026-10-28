@@ -43,13 +43,11 @@ export function injectStopwatch(
   options?: InjectStopwatchOptions,
 ): StopwatchBinding {
   const { stopwatch, ownsInstance } = resolveStopwatch(options)
-  const elapsed = useStore(stopwatch)
   const runningValue = signal(stopwatch.running)
-  const unsubscribeRunning = stopwatch.subscribe(() => {
+  const elapsed = useStore(stopwatch, () => {
     runningValue.set(stopwatch.running)
   })
 
-  inject(DestroyRef).onDestroy(unsubscribeRunning)
   if (ownsInstance) {
     inject(DestroyRef).onDestroy(() => {
       stopwatch.destroy()

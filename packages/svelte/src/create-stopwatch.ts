@@ -43,11 +43,11 @@ export function createStopwatch(
   options?: CreateStopwatchOptions,
 ): StopwatchStore {
   const { stopwatch, ownsInstance } = resolveStopwatch(options)
-  const { subscribe } = toSvelteStore(stopwatch)
+  const { subscribe, listen } = toSvelteStore(stopwatch)
   const running: Readable<boolean> = {
     subscribe(listener: Subscriber<boolean>): Unsubscriber {
       listener(stopwatch.running)
-      return stopwatch.subscribe(() => {
+      return listen(() => {
         listener(stopwatch.running)
       })
     },

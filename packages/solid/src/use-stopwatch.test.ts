@@ -116,6 +116,41 @@ describe('useStopwatch', () => {
     second.disposeRoot()
   })
 
+  it('keeps one core listener and updates elapsed while running stays true', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const rooted = createRoot((disposeRoot) => ({
+      disposeRoot,
+      binding: useStopwatch({ stopwatch: shared }),
+    }))
+
+    expect(bridgedListeners).toBe(1)
+    rooted.binding.start()
+    expect(rooted.binding.running()).toBe(true)
+    expect(rooted.binding.elapsed()).toBe(0)
+    clock.advance(16)
+    expect(rooted.binding.elapsed()).toBe(16)
+    expect(rooted.binding.running()).toBe(true)
+    expect(bridgedListeners).toBe(1)
+
+    rooted.disposeRoot()
+    expect(bridgedListeners).toBe(0)
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
+    expect(shared.running).toBe(true)
+  })
+
   it('does not destroy a borrowed stopwatch when the root disposes', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const shared = new Stopwatch(clock)

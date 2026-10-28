@@ -1,13 +1,12 @@
+import { formatClockParts } from './format-elapsed'
+
 type SkinProps = {
   elapsed: number
   running: boolean
 }
 
 export function TerminalSkin({ elapsed, running }: SkinProps) {
-  const totalMs = Math.max(0, Math.floor(elapsed))
-  const minutes = String(Math.floor(totalMs / 60_000)).padStart(2, '0')
-  const seconds = String(Math.floor((totalMs % 60_000) / 1000)).padStart(2, '0')
-  const centiseconds = String(Math.floor((totalMs % 1000) / 10)).padStart(2, '0')
+  const { minutes, seconds, centiseconds, totalMs } = formatClockParts(elapsed)
 
   return (
     <div className="flex h-full flex-col justify-between rounded-xl border border-[color-mix(in_srgb,var(--color-terminal-phosphor)_25%,transparent)] bg-[var(--color-terminal-well)] p-4 text-left shadow-[inset_0_0_40px_color-mix(in_srgb,var(--color-terminal-phosphor)_18%,transparent)]">

@@ -89,7 +89,7 @@ The adapter never calls `destroy()` on a borrowed instance. Own teardown yoursel
 ## Contract
 
 - `subscribe` calls the listener synchronously with the current elapsed value before registering it, as Svelte's readable contract requires.
-- The returned unsubscribe function is the underlying `Stopwatch.subscribe`'s own, so `$` auto-subscription cleanup unsubscribes from the instance.
+- Elapsed and `running` share one core `subscribe`. Unsubscribing removes that listener and drops the core subscription when neither readable still has listeners. That cleanup does not destroy the stopwatch.
 - The `Readable` half is value-only; controls are callable properties on the same object.
 
 ## Re-render cost

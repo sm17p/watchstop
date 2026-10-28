@@ -10,12 +10,19 @@ type VisibleTaskContext = {
 }
 
 const cleanups: Array<() => void> = []
+let deferVisibleTask = false
+let deferredVisibleTask: ((context: VisibleTaskContext) => void) | undefined
 
 vi.mock('@qwik.dev/core', () => ({
   useSignal: <T,>(initial: T): MockSignal<T> => ({ value: initial }),
   noSerialize: <T,>(value: T): T => value,
   $: <T,>(value: T): T => value,
   useVisibleTask$: (task: (context: VisibleTaskContext) => void): void => {
+    if (deferVisibleTask) {
+      deferVisibleTask = false
+      deferredVisibleTask = task
+      return
+    }
     task({
       cleanup: (callback: () => void): void => {
         cleanups.push(callback)
@@ -28,6 +35,8 @@ const { useStopwatch } = await import('./use-stopwatch.js')
 
 beforeEach(() => {
   cleanups.length = 0
+  deferVisibleTask = false
+  deferredVisibleTask = undefined
 })
 
 describe('useStopwatch', () => {
@@ -122,6 +131,87 @@ describe('useStopwatch', () => {
     expect(second.elapsed.value).toBe(16)
     expect(first.stopwatch).toBe(shared)
     expect(second.stopwatch).toBe(shared)
+  })
+
+  it('keeps one core listener and updates elapsed while running stays true', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const binding = useStopwatch({ stopwatch: shared })
+
+    expect(bridgedListeners).toBe(1)
+    binding.start()
+    expect(binding.running.value).toBe(true)
+    expect(binding.elapsed.value).toBe(0)
+    clock.advance(16)
+    expect(binding.elapsed.value).toBe(16)
+    expect(binding.running.value).toBe(true)
+    expect(bridgedListeners).toBe(1)
+
+    for (const cleanup of cleanups) {
+      cleanup()
+    }
+    expect(bridgedListeners).toBe(0)
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
+    expect(shared.running).toBe(true)
+  })
+
+  it('re-reads elapsed and running when the visible task attaches', () => {
+    deferVisibleTask = true
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const binding = useStopwatch({ stopwatch: shared })
+
+    expect(bridgedListeners).toBe(0)
+    expect(binding.elapsed.value).toBe(0)
+    expect(binding.running.value).toBe(false)
+
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(16)
+    expect(shared.running).toBe(true)
+    expect(binding.elapsed.value).toBe(0)
+    expect(binding.running.value).toBe(false)
+
+    const task = deferredVisibleTask
+    if (task === undefined) {
+      throw new Error('visible task was not registered')
+    }
+    task({
+      cleanup: (callback: () => void): void => {
+        cleanups.push(callback)
+      },
+    })
+
+    expect(bridgedListeners).toBe(1)
+    expect(binding.elapsed.value).toBe(16)
+    expect(binding.running.value).toBe(true)
+
+    clock.advance(16)
+    expect(binding.elapsed.value).toBe(32)
+    expect(binding.running.value).toBe(true)
+    expect(bridgedListeners).toBe(1)
   })
 
   it('does not destroy a borrowed stopwatch when the visible task cleans up', () => {

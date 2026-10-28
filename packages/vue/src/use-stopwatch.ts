@@ -41,13 +41,11 @@ function resolveStopwatch(options?: UseStopwatchOptions): {
 
 export function useStopwatch(options?: UseStopwatchOptions): StopwatchBinding {
   const { stopwatch, ownsInstance } = resolveStopwatch(options)
-  const elapsed = useStore(stopwatch)
   const running = shallowRef(stopwatch.running)
-  const unsubscribeRunning = stopwatch.subscribe(() => {
+  const elapsed = useStore(stopwatch, () => {
     running.value = stopwatch.running
   })
 
-  onScopeDispose(unsubscribeRunning)
   if (ownsInstance) {
     onScopeDispose(() => {
       stopwatch.destroy()

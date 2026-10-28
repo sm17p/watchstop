@@ -110,6 +110,41 @@ describe('Stopwatch', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
+  test('notifies once when reset clears a running segment still at zero', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock)
+    const listener = vi.fn()
+    stopwatch.start()
+    stopwatch.subscribe(listener)
+    stopwatch.reset()
+    expect(listener).toHaveBeenCalledOnce()
+    expect(listener).toHaveBeenCalledWith(0)
+    expect(stopwatch.get()).toBe(0)
+    expect(stopwatch.running).toBe(false)
+  })
+
+  test('stays silent when reset on an already-stopped stopwatch at zero', () => {
+    const mockClock = createMockClock()
+    const stopwatch = new Stopwatch(mockClock)
+    const listener = vi.fn()
+    stopwatch.start()
+    stopwatch.stop()
+    stopwatch.subscribe(listener)
+    stopwatch.reset()
+    expect(listener).not.toHaveBeenCalled()
+    expect(stopwatch.get()).toBe(0)
+    expect(stopwatch.running).toBe(false)
+
+    stopwatch.start()
+    mockClock.advance(25)
+    stopwatch.reset()
+    listener.mockClear()
+    stopwatch.reset()
+    expect(listener).not.toHaveBeenCalled()
+    expect(stopwatch.get()).toBe(0)
+    expect(stopwatch.running).toBe(false)
+  })
+
   test('stops notifying after unsubscribe and tolerates unsubscribing twice', () => {
     const mockClock = createMockClock()
     const stopwatch = new Stopwatch(mockClock)

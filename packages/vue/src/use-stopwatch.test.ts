@@ -123,6 +123,45 @@ describe('useStopwatch', () => {
     expect(second.stopwatch).toBe(shared)
   })
 
+  it('keeps one core listener and updates elapsed while running stays true', () => {
+    const clock = createMockClock({ frameDelay: 16 })
+    const shared = new Stopwatch(clock)
+    const subscribeToShared = shared.subscribe.bind(shared)
+    let bridgedListeners = 0
+    vi.spyOn(shared, 'subscribe').mockImplementation((listener) => {
+      bridgedListeners += 1
+      const unsubscribe = subscribeToShared(listener)
+      return (): void => {
+        bridgedListeners -= 1
+        unsubscribe()
+      }
+    })
+    const scope = effectScope()
+    let binding: StopwatchBinding | undefined
+    scope.run(() => {
+      binding = useStopwatch({ stopwatch: shared })
+    })
+    if (binding === undefined) {
+      throw new Error('effect scope did not run the composable')
+    }
+
+    expect(bridgedListeners).toBe(1)
+    binding.start()
+    expect(binding.running.value).toBe(true)
+    expect(binding.elapsed.value).toBe(0)
+    clock.advance(16)
+    expect(binding.elapsed.value).toBe(16)
+    expect(binding.running.value).toBe(true)
+    expect(bridgedListeners).toBe(1)
+
+    scope.stop()
+    expect(bridgedListeners).toBe(0)
+    shared.start()
+    clock.advance(16)
+    expect(shared.get()).toBe(32)
+    expect(shared.running).toBe(true)
+  })
+
   it('does not destroy a borrowed stopwatch when the scope stops', () => {
     const clock = createMockClock({ frameDelay: 16 })
     const shared = new Stopwatch(clock)
