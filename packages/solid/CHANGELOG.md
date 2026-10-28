@@ -1,5 +1,13 @@
 # @watchstop/solid
 
+## 1.3.1
+
+### Patch Changes
+
+- 385e36b: Notify listeners when reset stops a running segment that is still at zero, and keep elapsed and running on one core subscription in the framework adapters.
+- Updated dependencies [385e36b]
+  - @watchstop/core@0.4.1
+
 ## 1.3.0
 
 ### Minor Changes
