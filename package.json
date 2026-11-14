@@ -21,17 +21,31 @@
   "devDependencies": {
     "@changesets/cli": "3.0.0-next.10",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
-    "happy-dom": "^20.11.1",
+    "happy-dom": "^21.0.4",
     "tsdown": "^0.22.14",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   },
   "pnpm": {
     "overrides": {
+      "@vue/server-renderer": "3.5.45",
+      "brace-expansion": "2.1.8",
+      "devalue": "5.9.4",
+      "fast-uri": "3.1.9",
+      "js-yaml": "4.3.2",
+      "launch-editor": "2.14.2",
+      "minimatch": "11.0.1",
       "nanoid": "3.3.18",
+      "piscina": "5.3.2",
       "postcss": "8.5.25",
-      "sharp": "0.35.3",
-      "undici": "7.29.0"
+      "seroval": "1.8.1",
+      "sharp": "0.35.5",
+      "shell-quote": "1.11.0",
+      "smol-toml": "1.9.1",
+      "source-map-js": "1.2.2",
+      "svgo": "4.1.0",
+      "undici": "7.30.2",
+      "zod": "4.6.6"
     }
   }
 }
